@@ -1,4 +1,4 @@
-package com.database.finalproject.buffer;
+package com.database.finalproject.buffermanager;
 
 import com.database.finalproject.model.Page;
 

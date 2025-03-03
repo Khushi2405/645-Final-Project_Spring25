@@ -1,4 +1,5 @@
-package com.database.finalproject.buffer;
+package com.database.finalproject.buffermanager;
+import com.database.finalproject.model.DLLNode;
 import com.database.finalproject.model.Page;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -9,11 +10,15 @@ import java.util.HashMap;
 @Component
 public class BufferManagerImpl extends BufferManager {
 
-    private final Map<Integer, Page> pageBuffer;
+    DLLNode pinnedPages;
+    DLLNode unpinnedPages;
+    Map<Integer, DLLNode> pageBuffer;
 
     public BufferManagerImpl(@Value("${buffer.size:1024}")int bufferSize) {
         super(bufferSize);
-        this.pageBuffer = new HashMap<>(bufferSize);
+        this.pageBuffer= new HashMap<>(bufferSize);
+        unpinnedPages = null;
+        pinnedPages = null;
     }
 
     @Override
