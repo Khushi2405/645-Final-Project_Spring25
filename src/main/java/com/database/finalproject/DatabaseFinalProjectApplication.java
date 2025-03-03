@@ -12,8 +12,8 @@ public class DatabaseFinalProjectApplication {
 
 	public static void main(String[] args) throws IOException {
 		SpringApplication.run(DatabaseFinalProjectApplication.class, args);
-		Utilities.loadDataset("src/main/resources/static/title.basics.tsv");
-		Utilities.fetchPage(1);
+		//Utilities.loadDataset("src/main/resources/static/title.basics.tsv");
+		//Utilities.fetchPage(1);
 	}
 
 }

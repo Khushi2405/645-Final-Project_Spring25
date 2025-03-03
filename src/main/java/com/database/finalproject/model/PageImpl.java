@@ -8,25 +8,29 @@ import java.util.List;
 import java.util.Map;
 
 public class PageImpl implements Page {
-    Map<Integer,Row> rows;
-    int maxRows;
-    int nextRowId;
-    public static int totalPages = 0;
+    private static final int PAGE_SIZE = 4096;  // 4KB page size
+    private static final int ROW_SIZE = 39;    // Each row is 39 bytes
+    private static final int TOTAL_ROWS = PAGE_SIZE / ROW_SIZE; // 105 rows
+    private static final int REMAINING_BYTES = PAGE_SIZE % ROW_SIZE; // 1 byte
 
-    public PageImpl(int maxRows){
-        rows = new HashMap<>();
-        this.maxRows = maxRows;
-        this.nextRowId = -1;
+    private final Row[] rows;  // Stores 105 rows of 39 bytes each
+    private final byte extraByte; // Single extra byte to ensure exact 4KB;
+    private int nextRowId;
+
+    public PageImpl(){
+        rows = new Row[TOTAL_ROWS]; // Allocate exactly 105 rows
+        extraByte = REMAINING_BYTES;
+        nextRowId = -1;
     }
     @Override
     public Row getRow(int rowId) {
-        return rows.get(rowId);
+        return rows[rowId];
     }
 
     @Override
     public int insertRow(Row row) {
-        if(rows.size() < maxRows){
-            rows.put(++nextRowId,row);
+        if(nextRowId < TOTAL_ROWS){
+            rows[++nextRowId] = row;
             return nextRowId;
         }else{
             return -1;
@@ -35,15 +39,11 @@ public class PageImpl implements Page {
 
     @Override
     public boolean isFull() {
-        return rows.size() >= maxRows;
-    }
-
-    public int getTotalRows(){
-        return rows.size();
+        return nextRowId == TOTAL_ROWS;
     }
 
     public void writeToBinaryFile(DataOutputStream dos) throws IOException{
-        for(Row row : rows.values()){
+        for(Row row : rows){
             dos.write(row.getMovieId());
             dos.write(row.getTitle());
         }
