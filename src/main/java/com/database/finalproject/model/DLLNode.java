@@ -1,13 +1,13 @@
 package com.database.finalproject.model;
 
 public class DLLNode {
-    Page page;
-    DLLNode next;
-    DLLNode prev;
-    boolean isDirty;
-    int pinCount;
+    public Page page;
+    public DLLNode next;
+    public DLLNode prev;
+    public boolean isDirty;
+    public int pinCount;
 
-    DLLNode(Page page){
+    public DLLNode(Page page){
         this.page = page;
         next = null;
         prev = null;

@@ -16,11 +16,13 @@ public class PageImpl implements Page {
     private final Row[] rows;  // Stores 105 rows of 39 bytes each
     private final byte extraByte; // Single extra byte to ensure exact 4KB;
     private int nextRowId;
+    private int pageId;
 
-    public PageImpl(){
+    public PageImpl(int pageId){
         rows = new Row[TOTAL_ROWS]; // Allocate exactly 105 rows
         extraByte = REMAINING_BYTES;
         nextRowId = -1;
+        pageId = pageId;
     }
     @Override
     public Row getRow(int rowId) {
@@ -41,6 +43,12 @@ public class PageImpl implements Page {
     public boolean isFull() {
         return nextRowId == TOTAL_ROWS;
     }
+
+    @Override
+    public int getPid() {
+        return this.pageId;
+    }
+
 
     public void writeToBinaryFile(DataOutputStream dos) throws IOException{
         for(Row row : rows){

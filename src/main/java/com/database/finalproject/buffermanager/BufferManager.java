@@ -9,7 +9,7 @@ public abstract class BufferManager {
         this.bufferSize = bufferSize;
     }
 
-    public abstract Page getPage(int pageId);
+    public abstract Object getPage(int pageId);
     public abstract Page createPage();
     public abstract void markDirty(int pageId);
     public abstract void unpinPage(int pageId);
