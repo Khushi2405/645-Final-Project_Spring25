@@ -1,6 +1,7 @@
 package com.database.finalproject.buffermanager;
 
 import com.database.finalproject.model.Page;
+import com.database.finalproject.model.PageImpl;
 
 public abstract class BufferManager {
     final int bufferSize;
@@ -9,8 +10,10 @@ public abstract class BufferManager {
         this.bufferSize = bufferSize;
     }
 
-    public abstract Object getPage(int pageId);
+    public abstract Page getPage(int pageId);
     public abstract Page createPage();
     public abstract void markDirty(int pageId);
     public abstract void unpinPage(int pageId);
+
+    public abstract Page createPageToLoadDataset();
 }
