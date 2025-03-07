@@ -1,40 +1,22 @@
 package com.database.finalproject.model;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-
 import static com.database.finalproject.constants.PageConstants.PADDING_BYTE;
 
-public class Row {
-    private byte[] movieId;
-    private byte[] title;
+import java.util.Arrays;
+
+public record Row(byte[] movieId, byte[] title) {
+    @Override
+    public String toString() {
+        return "Row{" +
+                "movieId=" + new String(movieId).trim() +
+                ", title=" + new String(title).trim() +
+                '}';
+    }
 
     public Row(byte[] movieId, byte[] title) {
-        this.movieId = truncateOrPadByteArray(movieId,9);
-        this.title = truncateOrPadByteArray(title,30);
-        //System.out.println(this.movieId.length + " " + this.title.length);
+        this.movieId = movieId;
+        this.title = title;
     }
 
-    public byte[] getMovieId() {
-        return movieId;
-    }
 
-    public byte[] getTitle() {
-        return title;
-    }
-
-    private static byte[] truncateOrPadByteArray(byte[] value, int maxLength) {
-
-        if (value.length > maxLength) {
-            return Arrays.copyOf(value, maxLength); // Truncate safely at byte level
-        } else {
-            byte[] padded = new byte[maxLength];
-            System.arraycopy(value, 0, padded, 0, value.length); // Copy original bytes
-            Arrays.fill(padded, value.length, maxLength, PADDING_BYTE); // Fill remaining space with 0
-            return padded;
-        }
-
-
-
-    }
 }

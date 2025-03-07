@@ -9,7 +9,7 @@ public interface Page {
     boolean isFull();
     int getPid();
 
-    void writeToBinaryFile(DataOutputStream dos) throws IOException;
-
-    void updateBinaryFile();
+//    void writeToBinaryFile(DataOutputStream dos) throws IOException;
+//
+//    void updateBinaryFile();
 }
