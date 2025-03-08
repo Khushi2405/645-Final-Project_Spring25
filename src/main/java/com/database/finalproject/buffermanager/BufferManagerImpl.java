@@ -1,4 +1,5 @@
 package com.database.finalproject.buffermanager;
+
 import com.database.finalproject.model.DLLNode;
 import com.database.finalproject.model.Page;
 import com.database.finalproject.model.PageImpl;
@@ -100,6 +101,7 @@ public class BufferManagerImpl extends BufferManager {
         Page page = new PageImpl(++maxPages);
         DLLNode currNode = new DLLNode(page);
         addNewPage(page.getPid(), currNode);
+        markDirty(page.getPid());
         printDLL();
         return page;
     }
