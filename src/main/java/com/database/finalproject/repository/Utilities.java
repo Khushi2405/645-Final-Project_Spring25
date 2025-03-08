@@ -49,4 +49,40 @@ public class Utilities {
         }
     }
 
+//    public static void fetchPage(int pageId) throws IOException{
+//        String inputFile = "src/main/resources/static/binary_heap.bin";
+//        try(RandomAccessFile raf = new RandomAccessFile(inputFile, "r")){
+//            long offset = (long) (pageId-1) * PAGE_SIZE;
+//            raf.seek(offset);
+//            //PageImpl page = new PageImpl(PAGE_ROW_LIMIT);
+//            for(int i = 0 ; i < PAGE_ROW_LIMIT; i++){
+//                System.out.println(i);
+//                if(raf.getFilePointer() < raf.length()){
+//                    byte[] moveId = new byte[9];
+//                    byte[] movieTitle = new byte[30];
+//                    raf.read(moveId);
+//                    raf.read(movieTitle);
+//                    moveId = removeTrailingBytes(moveId);
+//                    movieTitle = removeTrailingBytes(movieTitle);
+//                    //Row row = new Row(moveId, movieTitle);
+//                    System.out.println(new String(moveId).trim());
+//                    System.out.println(new String(movieTitle).trim());
+//
+//                }
+//            }
+//        }
+//    }
+//
+
+
+//    private static byte[] removeTrailingBytes(byte[] input) {
+//        int endIndex = input.length;
+//        for (int i = input.length - 1; i >= 0; i--) {
+//            if (input[i] != PADDING_BYTE) {  // Only remove our custom padding byte
+//                endIndex = i + 1;
+//                break;
+//            }
+//        }
+//        return Arrays.copyOf(input, endIndex);
+//    }
 }
