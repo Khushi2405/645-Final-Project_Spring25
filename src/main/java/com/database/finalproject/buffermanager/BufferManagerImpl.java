@@ -19,14 +19,14 @@ public class BufferManagerImpl extends BufferManager {
     DLLNode headBufferPool, tailBufferPool;
     //DLLNode unpinnedPages;
     Map<Integer, DLLNode> pageHash;
-    int maxPages;
+    int pageCount;
 
     public BufferManagerImpl(@Value("${buffer.size:1024}")int bufferSize) {
         super(bufferSize);
         this.pageHash = new HashMap<>();
         tailBufferPool = null;
         headBufferPool = null;
-        maxPages = 0;
+        pageCount = 0;
     }
 
     @Override
@@ -78,16 +78,12 @@ public class BufferManagerImpl extends BufferManager {
     @Override
     public Page createPage() {
         // Logic to create a new page
-        File file = new File(INPUT_FILE);
-
-        if(maxPages == 0) {
+        if(pageCount == 0) {
+            File file = new File(INPUT_FILE);
             if (file.exists()) {
                 long fileSize = file.length(); // Size in bytes
-                System.out.println("File size: " + fileSize + " bytes");
-                System.out.println("No of pages: " + fileSize / PAGE_SIZE);
-                maxPages = (int) (fileSize / PAGE_SIZE);
-            } else {
-                System.out.println("File does not exist.");
+                System.out.println("File size: " + fileSize + " bytes" + " No of pages: " + fileSize / PAGE_SIZE);
+                pageCount = (int) (fileSize / PAGE_SIZE);
             }
         }
         if(pageHash.size() > bufferSize-1){
@@ -97,7 +93,7 @@ public class BufferManagerImpl extends BufferManager {
                 return null;
             };
         }
-        Page page = new PageImpl(++maxPages);
+        Page page = new PageImpl(++pageCount);
         DLLNode currNode = new DLLNode(page);
         addNewPage(page.getPid(), currNode);
         printDLL();
@@ -127,32 +123,20 @@ public class BufferManagerImpl extends BufferManager {
     }
     @Override
     public Page createPageToLoadDataset(){
-        return new PageImpl(++maxPages);
+        return new PageImpl(++pageCount);
     }
 
     @Override
     public void writeToBinaryFile(Page page) {
-        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "rw")){
-            long offset = (long) (page.getPid()-1) * PAGE_SIZE;
+        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "rw")) {
+            long offset = (long) (page.getPid() - 1) * PAGE_SIZE;
             raf.seek(offset);
-            for (int i = 0 ; i < PAGE_ROW_LIMIT; i++) {
-                Row row = page.getRow(i);
-                if(row != null){
-                    byte[] movieId = truncateOrPadByteArray(row.movieId(), 9);
-                    byte[] movieTitle = truncateOrPadByteArray(row.title(), 30);
-                    raf.write(movieId);
-                    raf.write(movieTitle);
-                } else {
-                    // If fewer entries are provided, write empty padded entries
-                    byte[] emptyArray = new byte[39];
-                    Arrays.fill(emptyArray, PADDING_BYTE);
-                    raf.write(emptyArray);
-                }
-            }
-            raf.write(EXTRA_BYTE);
-            System.out.println("Updated page " + page.getPid() + " successfully!");
 
-            //dos.flush();
+            byte[] pageData = page.getRows();
+
+            raf.write(pageData);
+
+            System.out.println("Updated page " + page.getPid() + " successfully!");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -188,31 +172,21 @@ public class BufferManagerImpl extends BufferManager {
         Page page = new PageImpl(pageId);
         try(RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "r")){
             long offset = (long) (pageId-1) * PAGE_SIZE;
-            System.out.println(raf.length()/PAGE_SIZE);
-            System.out.println("length " + raf.length() + " offset " + offset);
+            System.out.println("length " + raf.length() +  " pages " + raf.length()/PAGE_SIZE + " offset " + offset);
             if(raf.length() <= offset){
                 System.out.println("Page with page id : " + page.getPid() + " doesn't exist");
                 return null;
             }
             raf.seek(offset);
-            for(int i = 0 ; i < PAGE_ROW_LIMIT; i++){
-                //System.out.println(i);
-                if(raf.getFilePointer() < raf.length()){
-                    byte[] movieId = new byte[9];
-                    byte[] movieTitle = new byte[30];
-                    raf.read(movieId);
-                    raf.read(movieTitle);
-                    movieId = removeTrailingBytes(movieId);
-                    movieTitle = removeTrailingBytes(movieTitle);
-                    if(movieId != null && movieTitle != null){
-                        Row row = new Row(movieId, movieTitle);
-                        page.insertRow(row);
-//                        System.out.println(new String(movieId).trim());
-//                        System.out.println(new String(movieTitle).trim());
-                    }
-                    else break;
-
-                }
+            byte[] pageData = new byte[PAGE_SIZE];  // Buffer to hold 4096 bytes (one page)
+            raf.readFully(pageData);
+            int nextRow = binaryToDecimal(pageData[PAGE_SIZE - 1]);
+            for(int i = 0 ; i < nextRow; i++){
+                int offsetInPage = i * 39;
+                byte[] movieId = Arrays.copyOfRange(pageData, offsetInPage, offsetInPage + 9);
+                byte[] movieTitle = Arrays.copyOfRange(pageData, offsetInPage + 9, offsetInPage + 39);
+                Row row = new Row(movieId, movieTitle);
+                page.insertRow(row);
             }
             System.out.println(page.getRow(0));
             System.out.println(page.getRow(PAGE_ROW_LIMIT-1));
@@ -252,7 +226,6 @@ public class BufferManagerImpl extends BufferManager {
         }
         return true;
     }
-
     private void addNewPage(int pageId, DLLNode currNode) {
         pageHash.put(pageId, currNode);
         if(headBufferPool == tailBufferPool && tailBufferPool == null){
@@ -267,31 +240,7 @@ public class BufferManagerImpl extends BufferManager {
         }
         currNode.pinCount++;
     }
-
-    private static byte[] removeTrailingBytes(byte[] input) {
-        int endIndex = input.length;
-        boolean isArrayEmpty = true;
-        for (int i = input.length - 1; i >= 0; i--) {
-            if (input[i] != PADDING_BYTE) {  // Only remove our custom padding byte
-                endIndex = i + 1;
-                isArrayEmpty = false;
-                break;
-            }
-        }
-        return isArrayEmpty ? null : Arrays.copyOf(input, endIndex);
-    }
-
-    private static byte[] truncateOrPadByteArray(byte[] value, int maxLength) {
-
-        if (value.length > maxLength) {
-            return Arrays.copyOf(value, maxLength); // Truncate safely at byte level
-        } else {
-            byte[] padded = new byte[maxLength];
-            System.arraycopy(value, 0, padded, 0, value.length); // Copy original bytes
-            Arrays.fill(padded, value.length, maxLength, PADDING_BYTE); // Fill remaining space with 0x7F
-            return padded;
-        }
-
-
+    private static int binaryToDecimal(byte b) {
+        return Integer.parseInt(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'), 2);
     }
 }
