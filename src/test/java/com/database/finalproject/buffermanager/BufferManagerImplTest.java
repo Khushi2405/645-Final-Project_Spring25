@@ -20,24 +20,12 @@ class BufferManagerImplTest {
         bufferManager = new BufferManagerImpl(5);
     }
 
+    // page
     @Test
     void testCreatePage() {
         Page page = bufferManager.createPage();
         assertNotNull(page, "Page should be created successfully");
         assertTrue(page.getPid() >= 0, "Page ID should be valid");
-    }
-
-    @Test
-    void testInsertRow() {
-        Page page = bufferManager.createPage();
-        Row row = new Row("tt1111111".getBytes(StandardCharsets.UTF_8),
-                "Test Movie Insert".getBytes(StandardCharsets.UTF_8));
-
-        int rowId = page.insertRow(row) - 1;
-        assertEquals(0, rowId, "Row should be inserted at index 0");
-
-        Row fetchedRow = page.getRow(rowId);
-        assertNotNull(fetchedRow, "Inserted row should be retrievable");
     }
 
     @Test
@@ -51,54 +39,104 @@ class BufferManagerImplTest {
     }
 
     @Test
+    void testBufferFullForCreatePage() {
+        BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
+        for (int i = 1; i <= 5; i++) {
+            Page createdPage = bufferManagerSpy.createPage();
+        }
+        Page createdPageExtra = bufferManagerSpy.createPage();
+
+        assertNull(createdPageExtra, "Page should not be create, response should be NULL");
+    }
+
+    @Test
+    void testBufferFullForGetPage() {
+        BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
+        for (int i = 1; i <= 4; i++) {
+            Page createdPage = bufferManagerSpy.createPage();
+        }
+        Page page5 = bufferManagerSpy.createPage();
+        int pageId5 = page5.getPid();
+        bufferManagerSpy.unpinPage(pageId5);
+
+        Page newPage = bufferManagerSpy.createPage();
+
+        Page getPage5 = bufferManagerSpy.getPage(pageId5);
+
+        assertNull(getPage5, "Buffer full: Cannot get page, response should be NULL");
+    }
+
+    @Test
+    void testWritePageCall() {
+        BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
+        for (int i = 1; i <= 4; i++) {
+            Page createdPage = bufferManagerSpy.createPage();
+        }
+        Page page5 = bufferManagerSpy.createPage();
+        int pageId5 = page5.getPid();
+        bufferManagerSpy.unpinPage(pageId5);
+
+        Page newPage = bufferManagerSpy.createPage();
+        verify(bufferManagerSpy).writeToBinaryFile(page5);
+    }
+
+    @Test
     void testMarkDirtyOnCreatePage() {
-        // Create a spy to track method calls
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
 
-        // Create a page (should internally call markDirty)
         Page newPage = bufferManagerSpy.createPage();
         int pageId = newPage.getPid();
 
         // Verify if markDirty(pageId) was called inside createPage()
         verify(bufferManagerSpy).markDirty(pageId);
     }
+
     @Test
     void testUnpinPage() {
         Page page = bufferManager.createPage();
         int pageId = page.getPid();
-    
+
         bufferManager.unpinPage(pageId);
         assertEquals(0, bufferManager.getPinCount(pageId), "Page should be unpinned");
     }
 
     @Test
     void testLRUEviction() {
-    // Fill the buffer pool
+        // Fill the buffer pool
         Page page1 = bufferManager.createPage();
         Page page2 = bufferManager.createPage();
         Page page3 = bufferManager.createPage();
         Page page4 = bufferManager.createPage();
-        Page page5 = bufferManager.createPage();    
+        Page page5 = bufferManager.createPage();
 
-    // Access page1 to make it recently used
+        // Access page1 to make it recently used
         bufferManager.getPage(page1.getPid());
 
-    // Create a new page (should evict page2)
+        // Create a new page (should evict page2)
         Page newPage = bufferManager.createPage();
 
-    // Verify that page2 is evicted
+        // Verify that page2 is evicted
         assertNull(bufferManager.getPage(page2.getPid()), "Page2 should be evicted");
         assertNotNull(bufferManager.getPage(page1.getPid()), "Page1 should still be in the buffer");
         assertNotNull(bufferManager.getPage(newPage.getPid()), "New page should be in the buffer");
     }
+
     // @Test
     // void testMarkDirtyOnCreatePage() {
     // Page page = bufferManager.createPage();
     // int pageId = page.getPid();
+    // rows
+    @Test
+    void testInsertRow() {
+        Page page = bufferManager.createPage();
+        Row row = new Row("tt1111111".getBytes(StandardCharsets.UTF_8),
+                "Test Movie Insert".getBytes(StandardCharsets.UTF_8));
 
-    // bufferManager.markDirty(pageId);
-    // // Verify dirty page logic, could be a flag inside BufferManager
-    // bufferManager.
-    // }
+        int rowId = page.insertRow(row) - 1;
+        assertEquals(0, rowId, "Row should be inserted at index 0");
+
+        Row fetchedRow = page.getRow(rowId);
+        assertNotNull(fetchedRow, "Inserted row should be retrievable");
+    }
 
 }
