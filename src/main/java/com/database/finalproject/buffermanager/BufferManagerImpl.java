@@ -296,4 +296,12 @@ public class BufferManagerImpl extends BufferManager {
 
 
     }
+    
+    public int getPinCount(int pageId) {
+        if (pageHash.containsKey(pageId)) {
+            return pageHash.get(pageId).pinCount;
+        }
+        return -1; // Return -1 if the page is not found
+    }
+
 }
