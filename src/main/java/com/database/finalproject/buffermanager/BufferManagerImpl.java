@@ -3,6 +3,7 @@ package com.database.finalproject.buffermanager;
 import com.database.finalproject.model.DLLNode;
 import com.database.finalproject.model.Page;
 import com.database.finalproject.model.PageImpl;
+import com.database.finalproject.model.PageNotFoundException;
 import com.database.finalproject.model.Row;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -114,6 +115,7 @@ public class BufferManagerImpl extends BufferManager {
             return;
         }
         System.out.println("No such page id");
+        throw new PageNotFoundException("No page with this ID - " + pageId);
 
     }
 
@@ -125,8 +127,9 @@ public class BufferManagerImpl extends BufferManager {
             return;
         }
         System.out.println("No such page id");
-
+        throw new PageNotFoundException("No page with this ID - " + pageId);
     }
+
     @Override
     public Page createPageToLoadDataset(){
         return new PageImpl(++maxPages);
