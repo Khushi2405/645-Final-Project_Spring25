@@ -2,7 +2,6 @@ package com.database.finalproject.model;
 
 import static com.database.finalproject.constants.PageConstants.PADDING_BYTE;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public record Row(byte[] movieId, byte[] movieTitle) {
@@ -32,15 +31,12 @@ public record Row(byte[] movieId, byte[] movieTitle) {
 
     private static byte[] removeTrailingBytes(byte[] input) {
         int endIndex = input.length;
-//        boolean isArrayEmpty = true;
         for (int i = input.length - 1; i >= 0; i--) {
-            if (input[i] != PADDING_BYTE) {  // Only remove our custom padding byte
+            if (input[i] != PADDING_BYTE) {  // Only remove custom padding byte
                 endIndex = i + 1;
-//                isArrayEmpty = false;
                 break;
             }
         }
-//        return isArrayEmpty ? null : Arrays.copyOf(input, endIndex);
         return Arrays.copyOf(input,endIndex);
     }
 

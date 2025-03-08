@@ -5,7 +5,6 @@ import com.database.finalproject.model.Page;
 import com.database.finalproject.model.PageImpl;
 import com.database.finalproject.model.PageNotFoundException;
 import com.database.finalproject.model.Row;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -19,11 +18,10 @@ import static com.database.finalproject.constants.PageConstants.*;
 public class BufferManagerImpl extends BufferManager {
 
     DLLNode headBufferPool, tailBufferPool;
-    // DLLNode unpinnedPages;
     Map<Integer, DLLNode> pageHash;
     int pageCount;
 
-    public BufferManagerImpl(@Value("${buffer.size:1024}") int bufferSize) {
+    public BufferManagerImpl(int bufferSize) {
         super(bufferSize);
         this.pageHash = new HashMap<>();
         tailBufferPool = null;
@@ -34,14 +32,13 @@ public class BufferManagerImpl extends BufferManager {
     @Override
     public Page getPage(int pageId) {
         // Logic to fetch a page from buffer
-        System.out.println("hash Size " + pageHash.size());
+
         // if page id already in buffer then move it to front and increment the pin
         // counter
         if (pageHash.containsKey(pageId)) {
             DLLNode currNode = pageHash.get(pageId);
             bringPageFront(currNode);
             currNode.pinCount++;
-            printDLL();
             return currNode.page;
         } else {
             if (pageHash.size() > bufferSize - 1) {
@@ -51,15 +48,15 @@ public class BufferManagerImpl extends BufferManager {
                     System.out.println("Buffer manager is full cannot fetch new pages");
                     return null;
                 }
-                ;
             }
             try {
                 Page page = readPage(pageId);
+
+                // if page is null then page with the page id not found return null
                 if (page == null)
                     return null;
                 DLLNode currNode = new DLLNode(page);
                 addNewPage(pageId, currNode);
-                printDLL();
                 return page;
             } catch (IOException e) {
                 System.out.println("Cannot read file");
@@ -69,39 +66,20 @@ public class BufferManagerImpl extends BufferManager {
         }
     }
 
-    private void printDLL() {
-        DLLNode temp = headBufferPool;
-        while (temp != null) {
-            System.out.print(temp.page.getPid() + " ");
-            temp = temp.next;
-        }
-        System.out.println();
-    }
-
     @Override
     public Page createPage() {
         // Logic to create a new page
-        if (pageCount == 0) {
-            File file = new File(INPUT_FILE);
-            if (file.exists()) {
-                long fileSize = file.length(); // Size in bytes
-                System.out.println("File size: " + fileSize + " bytes" + " No of pages: " + fileSize / PAGE_SIZE);
-                pageCount = (int) (fileSize / PAGE_SIZE);
-            }
-        }
+
         if (pageHash.size() > bufferSize - 1) {
             if (!removeLRUNode()) {
                 // buffer manager is full throw error
                 System.out.println("Buffer manager is full cannot fetch new pages");
                 return null;
             }
-            ;
         }
-        Page page = new PageImpl(++pageCount);
+        Page page = new PageImpl(pageCount++);
         DLLNode currNode = new DLLNode(page);
         addNewPage(page.getPid(), currNode);
-        markDirty(page.getPid());
-        printDLL();
         return page;
     }
 
@@ -128,20 +106,16 @@ public class BufferManagerImpl extends BufferManager {
         throw new PageNotFoundException("No page with this ID - " + pageId);
     }
 
-    // @Override
-    // public Page createPageToLoadDataset() {
-    // return new PageImpl(++pageCount);
-    // }
-
     @Override
     public void writeToBinaryFile(Page page) {
-        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "rw")) {
+        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "rwd")) {
             long offset = (long) (page.getPid() - 1) * PAGE_SIZE;
             raf.seek(offset);
 
             byte[] pageData = page.getRows();
 
             raf.write(pageData);
+            raf.getFD().sync();
 
             System.out.println("Updated page " + page.getPid() + " successfully!");
         } catch (IOException e) {
@@ -179,8 +153,7 @@ public class BufferManagerImpl extends BufferManager {
     private Page readPage(int pageId) throws IOException {
         Page page = new PageImpl(pageId);
         try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "r")) {
-            long offset = (long) (pageId - 1) * PAGE_SIZE;
-            System.out.println("length " + raf.length() + " pages " + raf.length() / PAGE_SIZE + " offset " + offset);
+            long offset = (long) (pageId) * PAGE_SIZE;
             if (raf.length() <= offset) {
                 System.out.println("Page with page id : " + page.getPid() + " doesn't exist");
                 return null;
@@ -210,7 +183,7 @@ public class BufferManagerImpl extends BufferManager {
         }
         if (unpinnedNode == null) {
             // no such page with pincount 0
-            // throw erroe
+            // throw error
             return false;
         } else {
             if (unpinnedNode.isDirty) {
@@ -245,6 +218,7 @@ public class BufferManagerImpl extends BufferManager {
 
         }
         currNode.pinCount++;
+        markDirty(pageId);
     }
 
     private static int binaryToDecimal(byte b) {
