@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.database.finalproject.model.Page;
+import com.database.finalproject.model.PageNotFoundException;
 import com.database.finalproject.model.Row;
 
 class BufferManagerImplTest {
@@ -106,11 +107,7 @@ class BufferManagerImplTest {
         // Create a new page (should evict page2)
         Page newPage = bufferManager.createPage();
 
-        // Verify that page2 is evicted
-        // assertNull(bufferManager.getPage(page2.getPid()), "Page2 should be evicted");
         assertNotNull(bufferManager.getPage(page1.getPid()), "Page1 should still be in the buffer");
-        // assertNotNull(bufferManager.getPage(newPage.getPid()), "New page should be in
-        // the buffer");
     }
 
     // rows
@@ -125,6 +122,60 @@ class BufferManagerImplTest {
 
         Row fetchedRow = page.getRow(rowId);
         assertNotNull(fetchedRow, "Inserted row should be retrievable");
+    }
+
+    @Test
+    void testwriteToBinaryFileInsertRow() {
+        BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
+        // make 4 pages and pin
+        for (int i = 1; i <= 4; i++) {
+            Page createdPage = bufferManagerSpy.createPage();
+        }
+        // create 5th page and unpin
+        Page page5 = bufferManagerSpy.createPage();
+        int pageId5 = page5.getPid();
+        bufferManagerSpy.unpinPage(pageId5);
+
+        // create 6th page, page 5 will be evicted and unpin page 6
+        Page page6 = bufferManagerSpy.createPage();
+        int pageId6 = page6.getPid();
+        bufferManagerSpy.unpinPage(pageId6);
+
+        // get page5 [page6 gets evicted], insert rows, mark dirty, unpin
+        Page getPage5 = bufferManagerSpy.getPage(pageId5);
+        Row row = new Row("tt1111111".getBytes(StandardCharsets.UTF_8),
+                "Test Movie Insert".getBytes(StandardCharsets.UTF_8));
+        int rowId = getPage5.insertRow(row) - 1;
+        bufferManagerSpy.markDirty(pageId5);
+        bufferManagerSpy.unpinPage(pageId5);
+
+        // get page6 [5 gets evicted, should call writeToBinaryFile]
+        Page getPage6 = bufferManagerSpy.getPage(pageId6);
+        verify(bufferManagerSpy).writeToBinaryFile(getPage5);
+    }
+
+    // markDirty exception
+    @Test
+    void testMarkDirtyThrowsExceptionWhenPageNotFound() {
+        int invalidPageId = 999;
+
+        Exception exception = assertThrows(PageNotFoundException.class, () -> {
+            bufferManager.markDirty(invalidPageId);
+        });
+
+        assertEquals("No page with this ID - " + invalidPageId, exception.getMessage());
+    }
+
+    // unpin Exception
+    @Test
+    void testUnpinPageThrowsExceptionWhenPageNotFound() {
+        int invalidPageId = 999;
+
+        Exception exception = assertThrows(PageNotFoundException.class, () -> {
+            bufferManager.unpinPage(invalidPageId);
+        });
+
+        assertEquals("No page with this ID - " + invalidPageId, exception.getMessage());
     }
 
 }
