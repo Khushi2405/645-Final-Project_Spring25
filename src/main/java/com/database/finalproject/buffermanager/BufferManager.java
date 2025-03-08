@@ -11,11 +11,14 @@ public abstract class BufferManager {
     }
 
     public abstract Page getPage(int pageId);
+
     public abstract Page createPage();
+
     public abstract void markDirty(int pageId);
+
     public abstract void unpinPage(int pageId);
 
     public abstract Page createPageToLoadDataset();
+
     public abstract void writeToBinaryFile(Page page);
-    public abstract int getPinCount(int pageId);
 }
