@@ -8,8 +8,5 @@ public interface Page {
     int insertRow(Row row);
     boolean isFull();
     int getPid();
-
-//    void writeToBinaryFile(DataOutputStream dos) throws IOException;
-//
-//    void updateBinaryFile();
+    byte[] getRows();
 }
