@@ -17,4 +17,5 @@ public abstract class BufferManager {
 
     public abstract Page createPageToLoadDataset();
     public abstract void writeToBinaryFile(Page page);
+    public abstract int getPinCount(int pageId);
 }

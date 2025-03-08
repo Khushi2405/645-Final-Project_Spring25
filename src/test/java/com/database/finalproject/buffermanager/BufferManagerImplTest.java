@@ -62,7 +62,14 @@ class BufferManagerImplTest {
         // Verify if markDirty(pageId) was called inside createPage()
         verify(bufferManagerSpy).markDirty(pageId);
     }
-
+    @Test
+    void testUnpinPage() {
+        Page page = bufferManager.createPage();
+        int pageId = page.getPid();
+    
+        bufferManager.unpinPage(pageId);
+        assertEquals(0, bufferManager.getPinCount(pageId), "Page should be unpinned");
+    }
     // @Test
     // void testMarkDirtyOnCreatePage() {
     // Page page = bufferManager.createPage();
