@@ -117,7 +117,7 @@ class BufferManagerImplTest {
         Row row = new Row("tt1111111".getBytes(StandardCharsets.UTF_8),
                 "Test Movie Insert".getBytes(StandardCharsets.UTF_8));
 
-        int rowId = page.insertRow(row) - 1;
+        int rowId = page.insertRow(row);
         assertEquals(0, rowId, "Row should be inserted at index 0");
 
         Row fetchedRow = page.getRow(rowId);
