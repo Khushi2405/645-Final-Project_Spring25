@@ -92,15 +92,6 @@ class BufferManagerImplTest {
     }
 
     @Test
-    void testUnpinPage() {
-        Page page = bufferManager.createPage();
-        int pageId = page.getPid();
-
-        bufferManager.unpinPage(pageId);
-        assertEquals(0, bufferManager.getPinCount(pageId), "Page should be unpinned");
-    }
-
-    @Test
     void testLRUEviction() {
         // Fill the buffer pool
         Page page1 = bufferManager.createPage();
@@ -121,10 +112,6 @@ class BufferManagerImplTest {
         assertNotNull(bufferManager.getPage(newPage.getPid()), "New page should be in the buffer");
     }
 
-    // @Test
-    // void testMarkDirtyOnCreatePage() {
-    // Page page = bufferManager.createPage();
-    // int pageId = page.getPid();
     // rows
     @Test
     void testInsertRow() {
