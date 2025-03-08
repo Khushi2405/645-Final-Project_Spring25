@@ -5,6 +5,8 @@ import com.database.finalproject.model.Page;
 import com.database.finalproject.model.PageImpl;
 import com.database.finalproject.model.PageNotFoundException;
 import com.database.finalproject.model.Row;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -21,7 +23,7 @@ public class BufferManagerImpl extends BufferManager {
     Map<Integer, DLLNode> pageHash;
     int pageCount;
 
-    public BufferManagerImpl(int bufferSize) {
+    public BufferManagerImpl(@Value("${buffer.size:10}") int bufferSize) {
         super(bufferSize);
         this.pageHash = new HashMap<>();
         tailBufferPool = null;
@@ -109,7 +111,7 @@ public class BufferManagerImpl extends BufferManager {
     @Override
     public void writeToBinaryFile(Page page) {
         try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "rwd")) {
-            long offset = (long) (page.getPid() - 1) * PAGE_SIZE;
+            long offset = (long) (page.getPid()) * PAGE_SIZE;
             raf.seek(offset);
 
             byte[] pageData = page.getRows();
