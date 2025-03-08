@@ -62,7 +62,35 @@ class BufferManagerImplTest {
         // Verify if markDirty(pageId) was called inside createPage()
         verify(bufferManagerSpy).markDirty(pageId);
     }
+    @Test
+    void testUnpinPage() {
+        Page page = bufferManager.createPage();
+        int pageId = page.getPid();
+    
+        bufferManager.unpinPage(pageId);
+        assertEquals(0, bufferManager.getPinCount(pageId), "Page should be unpinned");
+    }
 
+    @Test
+    void testLRUEviction() {
+    // Fill the buffer pool
+        Page page1 = bufferManager.createPage();
+        Page page2 = bufferManager.createPage();
+        Page page3 = bufferManager.createPage();
+        Page page4 = bufferManager.createPage();
+        Page page5 = bufferManager.createPage();    
+
+    // Access page1 to make it recently used
+        bufferManager.getPage(page1.getPid());
+
+    // Create a new page (should evict page2)
+        Page newPage = bufferManager.createPage();
+
+    // Verify that page2 is evicted
+        assertNull(bufferManager.getPage(page2.getPid()), "Page2 should be evicted");
+        assertNotNull(bufferManager.getPage(page1.getPid()), "Page1 should still be in the buffer");
+        assertNotNull(bufferManager.getPage(newPage.getPid()), "New page should be in the buffer");
+    }
     // @Test
     // void testMarkDirtyOnCreatePage() {
     // Page page = bufferManager.createPage();
