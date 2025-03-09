@@ -25,26 +25,17 @@ class BufferManagerE2ETest {
     }
 
     @Test
-    void tet() {
-        
-        assertTrue(true, "");
-    }
-
-    @Test
-    void testEndToEnd1() {
+    void testPinStillInBuffer() {
         Path filePath = Paths.get("src", "main", "resources", "static", "title.basics.tsv");
         Utilities.loadDataset(bufferManager, "" + filePath.toAbsolutePath());
-        int i = 1;
-        Page page = bufferManager.getPage(i);
+        Page page = bufferManager.getPage(1);
         int totalTime = 0;
-        long totalIterations = 0;
-        while (page != null) {
-            i++;
+        long totalIterations = 100;
+        for (int i = 2; i <= 101; i++) {
             long startTime = System.nanoTime();
             page = bufferManager.getPage(i);
             long endTime = System.nanoTime();
-            totalTime += startTime - endTime;
-            totalIterations++;
+            totalTime += endTime - startTime;
             bufferManager.unpinPage(i);
         }
         long avgTime = totalTime / totalIterations;
@@ -52,7 +43,7 @@ class BufferManagerE2ETest {
         page = bufferManager.getPage(1);
         long endTime = System.nanoTime();
         long inBufferTime = endTime - startTime;
-        assertTrue(inBufferTime < 0.5 * avgTime, "Page 1 should be in the buffer");
+        assertTrue(inBufferTime < 0.5 * avgTime, "Page 1 should be in the buffer " + avgTime + " " + inBufferTime);
 
     }
 }

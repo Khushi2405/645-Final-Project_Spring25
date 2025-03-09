@@ -22,6 +22,7 @@ public class BufferManagerImpl extends BufferManager {
     DLLNode headBufferPool, tailBufferPool;
     Map<Integer, DLLNode> pageHash;
     int pageCount;
+    RandomAccessFile raf;
 
     public BufferManagerImpl(@Value("${buffer.size:10}") int bufferSize) {
         super(bufferSize);
@@ -29,6 +30,13 @@ public class BufferManagerImpl extends BufferManager {
         tailBufferPool = null;
         headBufferPool = null;
         pageCount = 0;
+        try {
+            raf = new RandomAccessFile(INPUT_FILE, "rwd");
+        }
+        catch (IOException e) {
+            System.out.println("Error in RAF");
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -82,6 +90,7 @@ public class BufferManagerImpl extends BufferManager {
         Page page = new PageImpl(pageCount++);
         DLLNode currNode = new DLLNode(page);
         addNewPage(page.getPid(), currNode);
+        markDirty(page.getPid());
         return page;
     }
 
@@ -110,18 +119,27 @@ public class BufferManagerImpl extends BufferManager {
 
     @Override
     public void writeToBinaryFile(Page page) {
-        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "rwd")) {
+        long l = 0;
+        try {
             long offset = (long) (page.getPid()) * PAGE_SIZE;
+            l = 1;
             raf.seek(offset);
 
+            l = 2;
             byte[] pageData = page.getRows();
 
+            l = 3;
             raf.write(pageData);
+            l = 4;
             raf.getFD().sync();
+            l = 5;
 
             System.out.println("Updated page " + page.getPid() + " successfully!");
+            l = 6;
+            l = 7;
         } catch (IOException e) {
             System.out.println("Reached the exception");
+            System.out.println(l);
             throw new RuntimeException(e);
         }
     }
@@ -221,7 +239,6 @@ public class BufferManagerImpl extends BufferManager {
 
         }
         currNode.pinCount++;
-        markDirty(pageId);
     }
 
     private static int binaryToDecimal(byte b) {
