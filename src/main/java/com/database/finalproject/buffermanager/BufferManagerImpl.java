@@ -121,6 +121,7 @@ public class BufferManagerImpl extends BufferManager {
 
             System.out.println("Updated page " + page.getPid() + " successfully!");
         } catch (IOException e) {
+            System.out.println("Reached the exception");
             throw new RuntimeException(e);
         }
     }
