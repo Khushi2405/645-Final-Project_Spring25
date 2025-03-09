@@ -1,5 +1,7 @@
 package com.database.finalproject.buffermanager;
 
+import static com.database.finalproject.constants.PageConstants.INPUT_FILE;
+import static com.database.finalproject.constants.PageConstants.PAGE_SIZE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
