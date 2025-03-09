@@ -28,21 +28,21 @@ class BufferManagerE2ETest {
         bufferManager = new BufferManagerImpl(5);
     }
 
-    @Test
+    @Test //tests that fetching a page that does not exist returns null
     void testNonExistentPage() throws IOException {
         Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
         Page page = bufferManager.getPage(120000); // Non-existent page ID
         assertNull(page, "Fetching a non-existent page should return null");
     }   
 
-    @Test
+    @Test //test that the dataset is getting loaded properly and pages are being fetched correctly
     void testLoadDatasetAndVerifyPages() throws IOException {
         Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
         Page page1 = bufferManager.getPage(1);
         assertNotNull(page1, "Page 1 should be created and pinned");
     }
 
-    @Test
+    @Test //tests the edge case where buffer pool size is 1
     void testBufferPoolSizeOne() throws IOException {
         BufferManager bufferManager = new BufferManagerImpl(1);
         Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
@@ -53,7 +53,7 @@ class BufferManagerE2ETest {
         Page page2 = bufferManager.getPage(2);
         assertNotNull(page2, "Page 2 should be in the buffer pool");
     }
-    
+
     @Test
     void testPinStillInBuffer() {
         Path filePath = Paths.get("src", "main", "resources", "static", "title.basics.tsv");
@@ -77,7 +77,7 @@ class BufferManagerE2ETest {
 
     }
 
-    @Test
+    @Test //tests that dirty pages are being written to file before eviction
     void testMarkDirtyAndWriteToBinaryFile() throws IOException {
         BufferManager bufferManager = new BufferManagerImpl(3);
         Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");

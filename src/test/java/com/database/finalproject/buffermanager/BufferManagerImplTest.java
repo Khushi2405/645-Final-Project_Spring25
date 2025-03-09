@@ -22,14 +22,14 @@ class BufferManagerImplTest {
     }
 
     // page
-    @Test
+    @Test //verifies that pages are being created 
     void testCreatePage() {
         Page page = bufferManager.createPage();
         assertNotNull(page, "Page should be created successfully");
         assertTrue(page.getPid() >= 0, "Page ID should be valid");
     }
 
-    @Test
+    @Test //tests that pages are being fetched
     void testFetchPage() {
         Page createdPage = bufferManager.createPage();
         int pageId = createdPage.getPid();
@@ -39,7 +39,7 @@ class BufferManagerImplTest {
         assertEquals(pageId, fetchedPage.getPid(), "Fetched page ID should match");
     }
 
-    @Test
+    @Test //tests that a new page is not created if buffer is full and all pages are pinned
     void testBufferFullForCreatePage() {
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
         for (int i = 1; i <= 5; i++) {
@@ -50,7 +50,7 @@ class BufferManagerImplTest {
         assertNull(createdPageExtra, "Page should not be create, response should be NULL");
     }
 
-    @Test
+    @Test //tests that buffer cannot get a page that exists but is not in buffer, if buffer is full and all pages are pinned
     void testBufferFullForGetPage() {
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
         for (int i = 1; i <= 4; i++) {
@@ -67,7 +67,7 @@ class BufferManagerImplTest {
         assertNull(getPage5, "Buffer full: Cannot get page, response should be NULL");
     }
 
-    @Test
+    @Test // tests
     void testWritePageCall() {
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
         for (int i = 1; i <= 4; i++) {
@@ -81,7 +81,7 @@ class BufferManagerImplTest {
         verify(bufferManagerSpy).writeToBinaryFile(page5);
     }
 
-    @Test
+    @Test //tests that createPage() is calling markDirty()
     void testMarkDirtyOnCreatePage() {
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
 
@@ -92,7 +92,7 @@ class BufferManagerImplTest {
         verify(bufferManagerSpy).markDirty(pageId);
     }
 
-    @Test
+    @Test //tests that LRU Eviction work properly
     void testLRUEviction() {
         // Fill the buffer pool
         Page page1 = bufferManager.createPage();
@@ -111,7 +111,7 @@ class BufferManagerImplTest {
     }
 
     // rows
-    @Test
+    @Test // tests that row insertions are working correctly 
     void testInsertRow() {
         Page page = bufferManager.createPage();
         Row row = new Row("tt1111111".getBytes(StandardCharsets.UTF_8),
@@ -124,7 +124,7 @@ class BufferManagerImplTest {
         assertNotNull(fetchedRow, "Inserted row should be retrievable");
     }
 
-    @Test
+    @Test //tests that dirty pages are written to file 
     void testwriteToBinaryFileInsertRow() {
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
         // make 4 pages and pin
@@ -155,7 +155,7 @@ class BufferManagerImplTest {
     }
 
     // markDirty exception
-    @Test
+    @Test // throws page not found exception when invalid page is marked dirty
     void testMarkDirtyThrowsExceptionWhenPageNotFound() {
         int invalidPageId = 999;
 
@@ -167,7 +167,7 @@ class BufferManagerImplTest {
     }
 
     // unpin Exception
-    @Test
+    @Test // throws page not found exception when you try to unpin a page that does not exist
     void testUnpinPageThrowsExceptionWhenPageNotFound() {
         int invalidPageId = 999;
 
