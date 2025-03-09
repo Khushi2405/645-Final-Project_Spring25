@@ -43,6 +43,18 @@ class BufferManagerE2ETest {
     }
 
     @Test
+    void testBufferPoolSizeOne() throws IOException {
+        BufferManager bufferManager = new BufferManagerImpl(1);
+        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
+
+        Page page1 = bufferManager.getPage(1);
+        assertNotNull(page1, "Page 1 should be in the buffer pool");
+        bufferManager.unpinPage(1);
+        Page page2 = bufferManager.getPage(2);
+        assertNotNull(page2, "Page 2 should be in the buffer pool");
+    }
+    
+    @Test
     void testPinStillInBuffer() {
         Path filePath = Paths.get("src", "main", "resources", "static", "title.basics.tsv");
         Utilities.loadDataset(bufferManager, "" + filePath.toAbsolutePath());
