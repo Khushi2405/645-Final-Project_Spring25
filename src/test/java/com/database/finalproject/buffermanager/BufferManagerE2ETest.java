@@ -24,6 +24,13 @@ class BufferManagerE2ETest {
     void setUp() {
         bufferManager = new BufferManagerImpl(5);
     }
+    
+    @Test
+    void testNonExistentPage() throws IOException {
+        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
+        Page page = bufferManager.getPage(120000); // Non-existent page ID
+        assertNull(page, "Fetching a non-existent page should return null");
+    }   
 
     @Test
     void testLoadDatasetAndVerifyPages() throws IOException {
@@ -31,7 +38,7 @@ class BufferManagerE2ETest {
         Page page1 = bufferManager.getPage(1);
         assertNotNull(page1, "Page 1 should be created and pinned");
     }
-    
+
     @Test
     void testPinStillInBuffer() {
         Path filePath = Paths.get("src", "main", "resources", "static", "title.basics.tsv");
