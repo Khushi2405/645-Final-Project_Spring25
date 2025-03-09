@@ -30,6 +30,9 @@ public class Utilities {
                     continue; // Skip invalid rows
                 byte[] movieId = columns[0].getBytes(); // tconst
                 byte[] movieTitle = columns[2].getBytes(); // primaryTitle
+                if(movieId.length > 9) {
+                    continue;
+                }
 
                 Row row = new Row(movieId, movieTitle);
                 currPage.insertRow(row);
@@ -43,7 +46,7 @@ public class Utilities {
             }
             bf.unpinPage(pageId);
             System.out.println("Dataset loaded");
-            System.out.println(currPage.getPid());
+            System.out.println("Last Page ID: " + currPage.getPid());
 
         } catch (IOException e) {
             e.printStackTrace();
