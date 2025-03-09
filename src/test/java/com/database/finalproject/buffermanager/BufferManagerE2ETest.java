@@ -5,6 +5,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +25,7 @@ class BufferManagerE2ETest {
     void setUp() {
         bufferManager = new BufferManagerImpl(5);
     }
-    
+
     @Test
     void testNonExistentPage() throws IOException {
         Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
@@ -60,5 +61,31 @@ class BufferManagerE2ETest {
         long inBufferTime = endTime - startTime;
         assertTrue(inBufferTime < 0.5 * avgTime, "Page 1 should be in the buffer " + avgTime + " " + inBufferTime);
 
+    }
+
+    @Test
+    void testMarkDirtyAndWriteToBinaryFile() throws IOException {
+        BufferManager bufferManager = new BufferManagerImpl(3);
+        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
+
+    // Fetch a page and modify its contents
+        Page page1 = bufferManager.getPage(1);
+        Row row = new Row("tt9999999".getBytes(StandardCharsets.UTF_8),
+            "Test Movie".getBytes(StandardCharsets.UTF_8));
+        page1.insertRow(row);
+        bufferManager.markDirty(1);
+        bufferManager.unpinPage(1);
+    // Evict the page by fetching new pages
+        bufferManager.getPage(2);
+        bufferManager.getPage(3);
+        bufferManager.getPage(4);
+
+    // Verify that the page is written to the binary file
+        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "r")) {
+            byte[] pageData = new byte[PAGE_SIZE];
+            raf.seek(0);
+            raf.readFully(pageData);
+            assertNotNull(pageData, "Page 1 should be written to the binary file");
+        }
     }
 }
