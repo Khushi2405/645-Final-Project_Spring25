@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,13 @@ class BufferManagerE2ETest {
         bufferManager = new BufferManagerImpl(5);
     }
 
+    @Test
+    void testLoadDatasetAndVerifyPages() throws IOException {
+        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
+        Page page1 = bufferManager.getPage(1);
+        assertNotNull(page1, "Page 1 should be created and pinned");
+    }
+    
     @Test
     void testPinStillInBuffer() {
         Path filePath = Paths.get("src", "main", "resources", "static", "title.basics.tsv");
