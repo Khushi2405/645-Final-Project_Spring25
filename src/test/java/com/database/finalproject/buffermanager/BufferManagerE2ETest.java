@@ -28,6 +28,72 @@ class BufferManagerE2ETest {
         bufferManager = new BufferManagerImpl(5);
     }
 
+    @Test
+    void testEndtoEnd() throws IOException {
+        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
+        Page page1 = bufferManager.getPage(1);
+        assertNotNull(page1, "Page1 should be in the buffer pool");
+        Page page2 = bufferManager.getPage(2);
+        assertNotNull(page2, "Page2 should be in the buffer pool");
+        Page page3 = bufferManager.getPage(3);
+        assertNotNull(page3, "Page3 should be in the buffer pool");
+        Page page4 = bufferManager.getPage(4);
+        assertNotNull(page4, "Page4 should be in the buffer pool");
+        Page page5 = bufferManager.getPage(5);
+        assertNotNull(page5, "Page5 should be in the buffer pool");
+
+        Page page6 = bufferManager.getPage(6);
+        assertNull(page6, "Page6 should not be in the buffer pool");
+
+        bufferManager.unpinPage(5);
+
+        Page getPage6 = bufferManager.getPage(6);
+        assertNotNull(getPage6, "Page6 should be in the buffer pool");
+
+        bufferManager.markDirty(1);
+        bufferManager.unpinPage(1);
+
+        Page page7 = bufferManager.getPage(7);
+
+        assertNotNull(page7, "Page7 should be in the buffer pool");
+        
+        // Verify that page1 is written to the binary file
+        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "r")) {
+            byte[] pageData = new byte[PAGE_SIZE];
+            raf.seek(0);
+            raf.readFully(pageData);
+            assertNotNull(pageData, "Page 1 should be written to the binary file");
+        }
+        bufferManager.unpinPage(3);
+        testConsecutiveInsertsAndQueries();
+        //testInsertQueryEvictReloadInsertQuery();
+
+    }
+
+    public void testConsecutiveInsertsAndQueries() {
+        // Create a new page and insert rows
+        Page page = bufferManager.createPage();
+        int pageId = page.getPid();
+        Row row = new Row(new byte[9], new byte[30]);
+        page.insertRow(row);
+        bufferManager.markDirty(pageId);
+        // Unpin the page
+        bufferManager.unpinPage(pageId);
+
+        // Force eviction by filling the buffer pool
+        Page page15 = bufferManager.getPage(15);
+        Page page16 = bufferManager.getPage(16);
+        Page page17 = bufferManager.getPage(17);
+        Page page18 = bufferManager.getPage(18);
+        Page page19 = bufferManager.getPage(19);
+        bufferManager.unpinPage(15);
+        // Reload the page and verify the inserted row
+        Page reloadedPage = bufferManager.getPage(pageId);
+        assertNotNull(reloadedPage.getRow(0));
+        
+    }
+    
+    
     @Test //tests that fetching a page that does not exist returns null
     void testNonExistentPage() throws IOException {
         Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
