@@ -213,7 +213,11 @@ public class BufferManagerImpl extends BufferManager {
             pageHash.remove(unpinnedNode.page.getPid());
             DLLNode prev = unpinnedNode.prev;
             DLLNode next = unpinnedNode.next;
-            if (unpinnedNode == tailBufferPool) {
+            if (unpinnedNode == headBufferPool && unpinnedNode == tailBufferPool) {
+                headBufferPool = null;
+                tailBufferPool = null;
+            } 
+            else if (unpinnedNode == tailBufferPool) {
                 prev.next = null;
                 tailBufferPool = prev;
             } else if (unpinnedNode == headBufferPool) {
