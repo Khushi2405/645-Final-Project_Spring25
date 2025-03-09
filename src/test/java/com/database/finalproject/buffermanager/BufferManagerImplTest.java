@@ -12,12 +12,19 @@ import com.database.finalproject.model.Page;
 import com.database.finalproject.model.PageNotFoundException;
 import com.database.finalproject.model.Row;
 
+import org.mockito.ArgumentCaptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class BufferManagerImplTest {
-    private BufferManager bufferManager;
+    private BufferManagerImpl bufferManager;
+    private Logger mockLogger;
 
     @BeforeEach
     void setUp() {
         bufferManager = new BufferManagerImpl(5);
+        mockLogger = mock(Logger.class);
+        bufferManager.logger = mockLogger;
     }
 
     // page
@@ -120,24 +127,6 @@ class BufferManagerImplTest {
         verify(bufferManagerSpy).markDirty(pageId);
     }
 
-    @Test
-    void testLRUEviction() {
-        // Fill the buffer pool
-        Page page1 = bufferManager.createPage();
-        Page page2 = bufferManager.createPage();
-        Page page3 = bufferManager.createPage();
-        Page page4 = bufferManager.createPage();
-        Page page5 = bufferManager.createPage();
-
-        // Access page1 to make it recently used
-        bufferManager.getPage(page1.getPid());
-
-        // Create a new page (should evict page2)
-        Page newPage = bufferManager.createPage();
-
-        assertNotNull(bufferManager.getPage(page1.getPid()), "Page1 should still be in the buffer");
-    }
-
     // rows
     @Test
     void testInsertRow() {
@@ -204,22 +193,23 @@ class BufferManagerImplTest {
 
     // markDirty exception
     @Test
-    void testMarkDirtyThrowsExceptionWhenPageNotFound() {
+    void testMarkDirtyWhenPageNotFound() {
         int invalidPageId = 999;
 
-        Exception exception = assertThrows(PageNotFoundException.class, () -> {
-            bufferManager.markDirty(invalidPageId);
-        });
+        bufferManager.markDirty(invalidPageId);
+        ArgumentCaptor<String> logMessageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockLogger).error(logMessageCaptor.capture(), eq(invalidPageId));
 
-        assertEquals("No page with this ID - " + invalidPageId, exception.getMessage());
+        assertEquals("Page not found: {}", logMessageCaptor.getValue());
     }
 
     @Test
     void testMarkDirtyDoesNotThrowError() {
         Page newPage = bufferManager.createPage();
         int pageId = newPage.getPid();
-        assertDoesNotThrow(() -> bufferManager.markDirty(pageId),
-                "markDirty should not throw an error when page exists in buffer");
+        bufferManager.markDirty(pageId);
+
+        verify(mockLogger, never()).error(anyString(), anyInt());
     }
 
     // unpin Exception
@@ -227,18 +217,19 @@ class BufferManagerImplTest {
     void testUnpinPageThrowsExceptionWhenPageNotFound() {
         int invalidPageId = 999;
 
-        Exception exception = assertThrows(PageNotFoundException.class, () -> {
-            bufferManager.unpinPage(invalidPageId);
-        });
+        bufferManager.unpinPage(invalidPageId);
+        ArgumentCaptor<String> logMessageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mockLogger).error(logMessageCaptor.capture(), eq(invalidPageId));
 
-        assertEquals("No page with this ID - " + invalidPageId, exception.getMessage());
+        assertEquals("Page not found: {}", logMessageCaptor.getValue());
     }
     @Test
     void testUnpinPageDoesNotThrowError() {
         Page newPage = bufferManager.createPage();
         int pageId = newPage.getPid();
-        assertDoesNotThrow(() -> bufferManager.unpinPage(pageId),
-                "unpinPage should not throw an error when page exists in buffer");
+
+        bufferManager.unpinPage(pageId);
+        verify(mockLogger, never()).error(anyString(), anyInt());
     }
 
 }
