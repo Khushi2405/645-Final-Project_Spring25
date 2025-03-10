@@ -6,6 +6,8 @@ import com.database.finalproject.model.PageImpl;
 import com.database.finalproject.model.PageNotFoundException;
 import com.database.finalproject.model.Row;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +25,7 @@ public class BufferManagerImpl extends BufferManager {
     Map<Integer, DLLNode> pageHash;
     int pageCount;
     RandomAccessFile raf;
+    public static Logger logger = LoggerFactory.getLogger(BufferManagerImpl.class);
 
     public BufferManagerImpl(@Value("${buffer.size:10}") int bufferSize) {
         super(bufferSize);
@@ -32,8 +35,7 @@ public class BufferManagerImpl extends BufferManager {
         pageCount = 0;
         try {
             raf = new RandomAccessFile(INPUT_FILE, "rwd");
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             System.out.println("Error in RAF");
             throw new RuntimeException(e);
         }
@@ -55,7 +57,7 @@ public class BufferManagerImpl extends BufferManager {
                 // implement LRU
                 if (!removeLRUNode()) {
                     // buffer manager is full throw error
-                    System.out.println("Buffer manager is full cannot fetch new pages");
+                    logger.error("Buffer manager is full cannot fetch new pages");
                     return null;
                 }
             }
@@ -63,13 +65,15 @@ public class BufferManagerImpl extends BufferManager {
                 Page page = readPage(pageId);
 
                 // if page is null then page with the page id not found return null
-                if (page == null)
+                if (page == null) {
+                    logger.error("Page not found: {}", pageId);
                     return null;
+                }
                 DLLNode currNode = new DLLNode(page);
                 addNewPage(pageId, currNode);
                 return page;
             } catch (IOException e) {
-                System.out.println("Cannot read file");
+                logger.error("Cannot read file");
                 return null;
             }
 
@@ -83,7 +87,7 @@ public class BufferManagerImpl extends BufferManager {
         if (pageHash.size() > bufferSize - 1) {
             if (!removeLRUNode()) {
                 // buffer manager is full throw error
-                System.out.println("Buffer manager is full cannot fetch new pages");
+                logger.error("Buffer manager is full cannot create new pages");
                 return null;
             }
         }
@@ -101,9 +105,7 @@ public class BufferManagerImpl extends BufferManager {
             pageHash.get(pageId).isDirty = true;
             return;
         }
-        System.out.println("No such page id");
-        throw new PageNotFoundException("No page with this ID - " + pageId);
-
+        logger.error("Page not found: {}", pageId);
     }
 
     @Override
@@ -113,8 +115,7 @@ public class BufferManagerImpl extends BufferManager {
             pageHash.get(pageId).pinCount--;
             return;
         }
-        System.out.println("No such page id");
-        throw new PageNotFoundException("No page with this ID - " + pageId);
+        logger.error("Page not found: {}", pageId);
     }
 
     @Override
@@ -128,9 +129,9 @@ public class BufferManagerImpl extends BufferManager {
             raf.write(pageData);
             raf.getFD().sync();
 
-//            System.out.println("Updated page " + page.getPid() + " successfully!");
+            // System.out.println("Updated page " + page.getPid() + " successfully!");
         } catch (IOException e) {
-//            System.out.println("Reached the exception");
+            // System.out.println("Reached the exception");
             throw new RuntimeException(e);
         }
     }
@@ -167,7 +168,7 @@ public class BufferManagerImpl extends BufferManager {
         try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "r")) {
             long offset = (long) (pageId) * PAGE_SIZE;
             if (raf.length() <= offset) {
-                System.out.println("Page with page id : " + page.getPid() + " doesn't exist");
+                logger.error("Page not found: {}", pageId);
                 return null;
             }
             raf.seek(offset);
@@ -181,8 +182,8 @@ public class BufferManagerImpl extends BufferManager {
                 Row row = new Row(movieId, movieTitle);
                 page.insertRow(row);
             }
-            System.out.println(page.getRow(0));
-            System.out.println(page.getRow(PAGE_ROW_LIMIT - 1));
+            // System.out.println(page.getRow(0));
+            // System.out.println(page.getRow(PAGE_ROW_LIMIT - 1));
 
         }
         return page;
@@ -204,11 +205,7 @@ public class BufferManagerImpl extends BufferManager {
             pageHash.remove(unpinnedNode.page.getPid());
             DLLNode prev = unpinnedNode.prev;
             DLLNode next = unpinnedNode.next;
-            if (unpinnedNode == headBufferPool && unpinnedNode == tailBufferPool) {
-                headBufferPool = null;
-                tailBufferPool = null;
-            } 
-            else if (unpinnedNode == tailBufferPool) {
+            if (unpinnedNode == tailBufferPool) {
                 prev.next = null;
                 tailBufferPool = prev;
             } else if (unpinnedNode == headBufferPool) {
