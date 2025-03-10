@@ -66,8 +66,8 @@ class BufferManagerE2ETest {
         }
         bufferManager.unpinPage(3);
         testConsecutiveInsertsAndQueries();
-        //testInsertQueryEvictReloadInsertQuery();
-
+        testInsertQueryEvictReloadInsertQuery();
+        testInsertQueryMarkDirtyEvictReload();
     }
 
     public void testConsecutiveInsertsAndQueries() {
@@ -92,7 +92,86 @@ class BufferManagerE2ETest {
         assertNotNull(reloadedPage.getRow(0));
         
     }
-    
+    public void testInsertQueryEvictReloadInsertQuery() {
+        // Create a new page
+        bufferManager.unpinPage(4);
+        Page page = bufferManager.createPage();
+        int pageId = page.getPid();
+
+        // Insert 2 rows
+        Row row1 = new Row("tt0000001".getBytes(), "Movie One".getBytes());
+        Row row2 = new Row("tt0000002".getBytes(), "Movie Two".getBytes());
+        page.insertRow(row1);
+        page.insertRow(row2);
+
+        // Query the rows
+        assertEquals("Row{movieId=tt0000001, title=Movie One}", page.getRow(0).toString());
+        assertEquals("Row{movieId=tt0000002, title=Movie Two}", page.getRow(1).toString());
+
+        // Unpin the page
+        bufferManager.unpinPage(pageId);
+
+        // Fill the buffer pool to force eviction
+        
+        Page page15 = bufferManager.getPage(15);
+        Page page16 = bufferManager.getPage(16);
+        Page page17 = bufferManager.getPage(17);
+        Page page18 = bufferManager.getPage(18);
+        Page page19 = bufferManager.getPage(19);
+        bufferManager.unpinPage(15);
+        // Reload the page and insert 2 more rows
+        page = bufferManager.getPage(pageId);
+        Row row3 = new Row("tt0000003".getBytes(), "Movie Three".getBytes());
+        Row row4 = new Row("tt0000004".getBytes(), "Movie Four".getBytes());
+        page.insertRow(row3);
+        page.insertRow(row4);
+
+        // Query all rows
+        assertEquals("Row{movieId=tt0000001, title=Movie One}", page.getRow(0).toString());
+        assertEquals("Row{movieId=tt0000002, title=Movie Two}", page.getRow(1).toString());
+        assertEquals("Row{movieId=tt0000003, title=Movie Three}", page.getRow(2).toString());
+        assertEquals("Row{movieId=tt0000004, title=Movie Four}", page.getRow(3).toString());
+
+        // Unpin the page
+        bufferManager.unpinPage(pageId);
+    }
+
+    public void testInsertQueryMarkDirtyEvictReload() {
+        // Create a new page
+        Page page = bufferManager.createPage();
+        int pageId = page.getPid();
+
+        // Insert 2 rows
+        Row row1 = new Row("tt0000001".getBytes(), "Movie One".getBytes());
+        Row row2 = new Row("tt0000002".getBytes(), "Movie Two".getBytes());
+        page.insertRow(row1);
+        page.insertRow(row2);
+
+        // Query the rows
+        assertEquals("Row{movieId=tt0000001, title=Movie One}", page.getRow(0).toString());
+        assertEquals("Row{movieId=tt0000002, title=Movie Two}", page.getRow(1).toString());
+
+        // Mark the page as dirty
+        bufferManager.markDirty(pageId);
+
+        // Unpin the page
+        bufferManager.unpinPage(pageId);
+
+        // Fill the buffer pool to force eviction
+        
+        Page page15 = bufferManager.getPage(15);
+        Page page16 = bufferManager.getPage(16);
+        Page page17 = bufferManager.getPage(17);
+        Page page18 = bufferManager.getPage(18);
+        Page page19 = bufferManager.getPage(19);
+        bufferManager.unpinPage(15);
+
+        // Reload the page and query the rows
+        Page reloadedPage = bufferManager.getPage(pageId);
+        assertEquals("Row{movieId=tt0000001, title=Movie One}", reloadedPage.getRow(0).toString());
+        assertEquals("Row{movieId=tt0000002, title=Movie Two}", reloadedPage.getRow(1).toString());
+
+    }
     
     @Test //tests that fetching a page that does not exist returns null
     void testNonExistentPage() throws IOException {
