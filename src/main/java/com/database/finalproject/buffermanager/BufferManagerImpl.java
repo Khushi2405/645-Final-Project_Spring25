@@ -24,6 +24,7 @@ public class BufferManagerImpl extends BufferManager {
     DLLNode headBufferPool, tailBufferPool;
     Map<Integer, DLLNode> pageHash;
     int pageCount;
+    RandomAccessFile raf;
     public static Logger logger = LoggerFactory.getLogger(BufferManagerImpl.class);
 
     public BufferManagerImpl(@Value("${buffer.size:10}") int bufferSize) {
@@ -32,6 +33,12 @@ public class BufferManagerImpl extends BufferManager {
         tailBufferPool = null;
         headBufferPool = null;
         pageCount = 0;
+        try {
+            raf = new RandomAccessFile(INPUT_FILE, "rwd");
+        } catch (IOException e) {
+            System.out.println("Error in RAF");
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -87,6 +94,7 @@ public class BufferManagerImpl extends BufferManager {
         Page page = new PageImpl(pageCount++);
         DLLNode currNode = new DLLNode(page);
         addNewPage(page.getPid(), currNode);
+        markDirty(page.getPid());
         return page;
     }
 
@@ -112,7 +120,7 @@ public class BufferManagerImpl extends BufferManager {
 
     @Override
     public void writeToBinaryFile(Page page) {
-        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "rwd")) {
+        try {
             long offset = (long) (page.getPid()) * PAGE_SIZE;
             raf.seek(offset);
 
@@ -121,8 +129,9 @@ public class BufferManagerImpl extends BufferManager {
             raf.write(pageData);
             raf.getFD().sync();
 
-            System.out.println("Updated page " + page.getPid() + " successfully!");
+            // System.out.println("Updated page " + page.getPid() + " successfully!");
         } catch (IOException e) {
+            // System.out.println("Reached the exception");
             throw new RuntimeException(e);
         }
     }
@@ -173,6 +182,9 @@ public class BufferManagerImpl extends BufferManager {
                 Row row = new Row(movieId, movieTitle);
                 page.insertRow(row);
             }
+            // System.out.println(page.getRow(0));
+            // System.out.println(page.getRow(PAGE_ROW_LIMIT - 1));
+
         }
         return page;
     }
@@ -219,7 +231,6 @@ public class BufferManagerImpl extends BufferManager {
 
         }
         currNode.pinCount++;
-        markDirty(pageId);
     }
 
     private static int binaryToDecimal(byte b) {

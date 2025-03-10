@@ -28,7 +28,7 @@ class BufferManagerImplTest {
     }
 
     // page
-    //createPage tests
+    // createPage tests
     @Test
     void testCreatePage() {
         // create a new page
@@ -64,7 +64,7 @@ class BufferManagerImplTest {
     @Test
     void testFetchPageNotInBuffer() {
         // page not in buffer pool
-        for(int i = 1; i <= 4; i++) {
+        for (int i = 1; i <= 4; i++) {
             Page createdPage = bufferManager.createPage();
         }
         Page page5 = bufferManager.createPage();
@@ -102,7 +102,7 @@ class BufferManagerImplTest {
 
     @Test
     void testWritePageCall() {
-        //empty page writes
+        // empty page writes
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
         for (int i = 1; i <= 4; i++) {
             Page createdPage = bufferManagerSpy.createPage();
@@ -146,7 +146,7 @@ class BufferManagerImplTest {
     @Test
     void testPageFull() {
         Page page = bufferManager.createPage();
-        for(int i = 1; i <= 105; i++) {
+        for (int i = 1; i <= 105; i++) {
             Row row = new Row("tt1111111".getBytes(StandardCharsets.UTF_8),
                     "Test Movie Insert".getBytes(StandardCharsets.UTF_8));
             int rowId = page.insertRow(row);
@@ -223,6 +223,7 @@ class BufferManagerImplTest {
 
         assertEquals("Page not found: {}", logMessageCaptor.getValue());
     }
+
     @Test
     void testUnpinPageDoesNotThrowError() {
         Page newPage = bufferManager.createPage();

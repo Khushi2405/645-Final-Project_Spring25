@@ -30,7 +30,7 @@ public class Utilities {
                     continue; // Skip invalid rows
                 byte[] movieId = columns[0].getBytes(); // tconst
                 byte[] movieTitle = columns[2].getBytes(); // primaryTitle
-                if(movieId.length > 9) {
+                if (movieId.length > 9) {
                     continue;
                 }
 
