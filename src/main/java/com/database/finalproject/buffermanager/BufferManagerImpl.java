@@ -119,27 +119,18 @@ public class BufferManagerImpl extends BufferManager {
 
     @Override
     public void writeToBinaryFile(Page page) {
-        long l = 0;
         try {
             long offset = (long) (page.getPid()) * PAGE_SIZE;
-            l = 1;
             raf.seek(offset);
 
-            l = 2;
             byte[] pageData = page.getRows();
 
-            l = 3;
             raf.write(pageData);
-            l = 4;
             raf.getFD().sync();
-            l = 5;
 
-            System.out.println("Updated page " + page.getPid() + " successfully!");
-            l = 6;
-            l = 7;
+//            System.out.println("Updated page " + page.getPid() + " successfully!");
         } catch (IOException e) {
-            System.out.println("Reached the exception");
-            System.out.println(l);
+//            System.out.println("Reached the exception");
             throw new RuntimeException(e);
         }
     }

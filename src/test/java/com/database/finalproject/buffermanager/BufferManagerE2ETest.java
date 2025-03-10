@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,20 +18,28 @@ import com.database.finalproject.model.Page;
 import com.database.finalproject.model.PageNotFoundException;
 import com.database.finalproject.model.Row;
 import com.database.finalproject.repository.Utilities;
+import org.junit.jupiter.api.TestInstance;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BufferManagerE2ETest {
     private BufferManager bufferManager;
 
+    @BeforeAll
+    void setup() {
+        bufferManager = new BufferManagerImpl(5);
+        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
+    }
     @BeforeEach
     void setUp() {
-        bufferManager = new BufferManagerImpl(5);
+//        bufferManager = new BufferManagerImpl(5);
     }
 
     @Test
     void testEndtoEnd() throws IOException {
-        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
+//        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
         Page page1 = bufferManager.getPage(1);
         assertNotNull(page1, "Page1 should be in the buffer pool");
         Page page2 = bufferManager.getPage(2);
@@ -56,7 +65,7 @@ class BufferManagerE2ETest {
         Page page7 = bufferManager.getPage(7);
 
         assertNotNull(page7, "Page7 should be in the buffer pool");
-        
+
         // Verify that page1 is written to the binary file
         try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "r")) {
             byte[] pageData = new byte[PAGE_SIZE];
@@ -66,7 +75,7 @@ class BufferManagerE2ETest {
         }
         bufferManager.unpinPage(3);
         testConsecutiveInsertsAndQueries();
-        //testInsertQueryEvictReloadInsertQuery();
+        // testInsertQueryEvictReloadInsertQuery();
 
     }
 
@@ -90,28 +99,26 @@ class BufferManagerE2ETest {
         // Reload the page and verify the inserted row
         Page reloadedPage = bufferManager.getPage(pageId);
         assertNotNull(reloadedPage.getRow(0));
-        
+
     }
-    
-    
-    @Test //tests that fetching a page that does not exist returns null
+
+
+    @Test // tests that fetching a page that does not exist returns null
     void testNonExistentPage() throws IOException {
-        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
         Page page = bufferManager.getPage(120000); // Non-existent page ID
         assertNull(page, "Fetching a non-existent page should return null");
-    }   
+    }
 
-    @Test //test that the dataset is getting loaded properly and pages are being fetched correctly
+    @Test // test that the dataset is getting loaded properly and pages are being fetched
+          // correctly
     void testLoadDatasetAndVerifyPages() throws IOException {
-        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
         Page page1 = bufferManager.getPage(1);
         assertNotNull(page1, "Page 1 should be created and pinned");
     }
 
-    @Test //tests the edge case where buffer pool size is 1
+    @Test // tests the edge case where buffer pool size is 1
     void testBufferPoolSizeOne() throws IOException {
         BufferManager bufferManager = new BufferManagerImpl(1);
-        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
 
         Page page1 = bufferManager.getPage(1);
         assertNotNull(page1, "Page 1 should be in the buffer pool");
@@ -122,8 +129,6 @@ class BufferManagerE2ETest {
 
     @Test
     void testPinStillInBuffer() {
-        Path filePath = Paths.get("src", "main", "resources", "static", "title.basics.tsv");
-        Utilities.loadDataset(bufferManager, "" + filePath.toAbsolutePath());
         Page page = bufferManager.getPage(1);
         int totalTime = 0;
         long totalIterations = 100;
@@ -143,24 +148,23 @@ class BufferManagerE2ETest {
 
     }
 
-    @Test //tests that dirty pages are being written to file before eviction
+    @Test // tests that dirty pages are being written to file before eviction
     void testMarkDirtyAndWriteToBinaryFile() throws IOException {
         BufferManager bufferManager = new BufferManagerImpl(3);
-        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
 
-    // Fetch a page and modify its contents
+        // Fetch a page and modify its contents
         Page page1 = bufferManager.getPage(1);
         Row row = new Row("tt9999999".getBytes(StandardCharsets.UTF_8),
-            "Test Movie".getBytes(StandardCharsets.UTF_8));
+                "Test Movie".getBytes(StandardCharsets.UTF_8));
         page1.insertRow(row);
         bufferManager.markDirty(1);
         bufferManager.unpinPage(1);
-    // Evict the page by fetching new pages
+        // Evict the page by fetching new pages
         bufferManager.getPage(2);
         bufferManager.getPage(3);
         bufferManager.getPage(4);
 
-    // Verify that the page is written to the binary file
+        // Verify that the page is written to the binary file
         try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "r")) {
             byte[] pageData = new byte[PAGE_SIZE];
             raf.seek(0);
