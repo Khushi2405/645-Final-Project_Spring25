@@ -1,5 +1,4 @@
-# 645-Final-Project_Spring25
-# Project Description
+# 645-Final-Project_Spring2025 Database Management System
 
 # Project Description
 
@@ -9,7 +8,7 @@ It is built using **Java 17** and **Apache Maven 3.9.9**, with tests implemented
 
 ## Dataset
 
-The IMDB dataset can be downloaded from the official IMDB Developer portal:  
+The IMDB title.basics.tsv dataset can be downloaded from the official IMDB Developer portal:  
 [IMDB Non-Commercial Datasets](https://developer.imdb.com/non-commercial-datasets/)
 
 # Instructions for Running the Code
