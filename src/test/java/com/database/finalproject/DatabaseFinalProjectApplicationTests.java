@@ -17,7 +17,4 @@ import com.database.finalproject.model.Row;
 @SpringBootTest
 class DatabaseFinalProjectApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
 }

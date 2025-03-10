@@ -9,12 +9,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.database.finalproject.model.Page;
-import com.database.finalproject.model.PageNotFoundException;
 import com.database.finalproject.model.Row;
 
 import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 class BufferManagerImplTest {
     private BufferManagerImpl bufferManager;

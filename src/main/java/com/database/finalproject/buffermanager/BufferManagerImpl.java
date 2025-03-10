@@ -3,18 +3,17 @@ package com.database.finalproject.buffermanager;
 import com.database.finalproject.model.DLLNode;
 import com.database.finalproject.model.Page;
 import com.database.finalproject.model.PageImpl;
-import com.database.finalproject.model.PageNotFoundException;
 import com.database.finalproject.model.Row;
-
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.HashMap;
 
 import static com.database.finalproject.constants.PageConstants.*;
 
@@ -36,7 +35,7 @@ public class BufferManagerImpl extends BufferManager {
         try {
             raf = new RandomAccessFile(INPUT_FILE, "rwd");
         } catch (IOException e) {
-            System.out.println("Error in RAF");
+            System.out.println("Error in RAF, file cannot be created");
             throw new RuntimeException(e);
         }
     }
@@ -45,8 +44,7 @@ public class BufferManagerImpl extends BufferManager {
     public Page getPage(int pageId) {
         // Logic to fetch a page from buffer
 
-        // if page id already in buffer then move it to front and increment the pin
-        // counter
+        // if page id already in buffer then move it to front and increment the pin counter
         if (pageHash.containsKey(pageId)) {
             DLLNode currNode = pageHash.get(pageId);
             bringPageFront(currNode);
@@ -184,7 +182,6 @@ public class BufferManagerImpl extends BufferManager {
             }
             // System.out.println(page.getRow(0));
             // System.out.println(page.getRow(PAGE_ROW_LIMIT - 1));
-
         }
         return page;
     }
