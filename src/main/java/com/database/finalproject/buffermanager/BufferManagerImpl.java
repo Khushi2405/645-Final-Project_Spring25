@@ -134,6 +134,19 @@ public class BufferManagerImpl extends BufferManager {
         }
     }
 
+    @Override
+    public void force() {
+        while(headBufferPool != null){
+            if(headBufferPool.isDirty) {
+                writeToBinaryFile(headBufferPool.page);
+            }
+            headBufferPool = headBufferPool.next;
+        }
+        pageHash.clear();
+        headBufferPool = null;
+        tailBufferPool = null;
+    }
+
     private void bringPageFront(DLLNode currNode) {
         // if node is already at front don't do anything
         if (currNode == headBufferPool)

@@ -19,4 +19,6 @@ public abstract class BufferManager {
     public abstract void unpinPage(int pageId);
 
     public abstract void writeToBinaryFile(Page page);
+
+    public abstract void force();
 }
