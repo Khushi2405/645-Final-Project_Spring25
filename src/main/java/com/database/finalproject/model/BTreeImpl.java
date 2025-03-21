@@ -11,9 +11,15 @@ public class BTreeImpl<K extends Comparable<K>, V> implements BTree<K, V> {
     private int nextPageId = 0;
 
     public BTreeImpl(String indexFileName, int order) throws IOException {
-        this.indexFile = new RandomAccessFile(indexFileName, "rw");
+        // this.indexFile = new RandomAccessFile(indexFileName, "rw");
         this.order = order;
         this.root = new BTreeNode<>(true, order - 1);
+        try {
+            indexFile = new RandomAccessFile(indexFileName, "rwd");
+        } catch (IOException e) {
+            System.out.println("Error in RAF, file cannot be created");
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

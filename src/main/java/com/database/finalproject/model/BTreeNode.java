@@ -2,30 +2,21 @@ package com.database.finalproject.model;
 
 import java.io.*;
 import java.util.*;
+import java.io.Serializable;
 
-// Record Identifier
-class Rid implements Serializable {
-    int pid; // Page ID
-    int sid; // Slot ID within the page
-
-    public Rid(int pid, int sid) {
-        this.pid = pid;
-        this.sid = sid;
-    }
-}
 
 // B+ Tree Node
 class BTreeNode<K extends Comparable<K>> implements Serializable {
     boolean isLeaf;
-    List<K> keys;
+    List<K> keys; // Array of keys in node
     List<Object> children; // Rids for leaf nodes, page pointers for internal nodes
-    int maxKeys;
+    int numKeys;
 
-    public BTreeNode(boolean isLeaf, int maxKeys) {
+    public BTreeNode(boolean isLeaf, int numKeys) {
         this.isLeaf = isLeaf;
         this.keys = new ArrayList<>();
         this.children = new ArrayList<>();
-        this.maxKeys = maxKeys;
+        this.numKeys = numKeys;
     }
 }
 
