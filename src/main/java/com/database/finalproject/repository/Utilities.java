@@ -1,7 +1,9 @@
 package com.database.finalproject.repository;
 
+import com.database.finalproject.btree.BTree;
 import com.database.finalproject.buffermanager.BufferManager;
 import com.database.finalproject.model.Page;
+import com.database.finalproject.model.Rid;
 import com.database.finalproject.model.Row;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -45,6 +47,10 @@ public class Utilities {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void createMovieIdIndex(BufferManager bf, BTree<String, Rid> b){
+
     }
 }
 
