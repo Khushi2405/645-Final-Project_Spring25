@@ -4,19 +4,23 @@ import java.io.*;
 import java.util.*;
 import java.io.Serializable;
 
-
 // B+ Tree Node
-class BTreeNode<K extends Comparable<K>> implements Serializable {
-    boolean isLeaf;
-    List<K> keys; // Array of keys in node
-    List<Object> children; // Rids for leaf nodes, page pointers for internal nodes
-    int numKeys;
+public class BTreeNode<K extends Comparable<K>> implements Serializable {
+    public boolean isLeaf;
+    public List<K> keys; // Array of keys in node
+    public List<Object> children; // Rids for leaf nodes, page pointers for internal nodes
+    public int numKeys;
 
     public BTreeNode(boolean isLeaf, int numKeys) {
         this.isLeaf = isLeaf;
         this.keys = new ArrayList<>();
         this.children = new ArrayList<>();
         this.numKeys = numKeys;
+    }
+
+    public boolean isFull() {
+        // TODO: isFull logic
+        return false;
     }
 }
 
