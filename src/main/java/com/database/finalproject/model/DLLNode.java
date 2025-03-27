@@ -6,8 +6,10 @@ public class DLLNode {
     public DLLNode prev;
     public boolean isDirty;
     public int pinCount;
+    public int index;
 
-    public DLLNode(Page page){
+    public DLLNode(Page page, int index){
+        this.index = index;
         this.page = page;
         next = null;
         prev = null;

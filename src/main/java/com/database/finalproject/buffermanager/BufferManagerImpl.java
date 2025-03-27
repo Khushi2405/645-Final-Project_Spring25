@@ -1,9 +1,7 @@
 package com.database.finalproject.buffermanager;
 
-import com.database.finalproject.model.DLLNode;
-import com.database.finalproject.model.Page;
-import com.database.finalproject.model.PageImpl;
-import com.database.finalproject.model.Row;
+import com.database.finalproject.model.*;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
@@ -21,19 +19,35 @@ import static com.database.finalproject.constants.PageConstants.*;
 public class BufferManagerImpl extends BufferManager {
 
     DLLNode headBufferPool, tailBufferPool;
-    Map<Integer, DLLNode> pageHash;
-    int pageCount;
-    RandomAccessFile raf;
+    Map<Pair<Integer, Integer>, DLLNode> pageHash;
+    DatabaseCatalog catalog;
+    RandomAccessFile dataRaf;
+    RandomAccessFile movieIdIndexRaf;
+    RandomAccessFile movieTitleRaf;
     public static Logger logger = LoggerFactory.getLogger(BufferManagerImpl.class);
 
     public BufferManagerImpl(@Value("${buffer.size:10}") int bufferSize) {
         super(bufferSize);
+        catalog = new DatabaseCatalog("src/main/resources/static/database_catalog.txt");
         this.pageHash = new HashMap<>();
         tailBufferPool = null;
         headBufferPool = null;
-        pageCount = 0;
+
+
         try {
-            raf = new RandomAccessFile(INPUT_FILE, "rwd");
+            dataRaf = new RandomAccessFile(catalog.getCatalog(0).get("filename"), "rwd");
+        } catch (IOException e) {
+            System.out.println("Error in RAF, file cannot be created");
+            throw new RuntimeException(e);
+        }
+        try {
+            movieIdIndexRaf = new RandomAccessFile(catalog.getCatalog(1).get("filename"), "rwd");
+        } catch (IOException e) {
+            System.out.println("Error in RAF, file cannot be created");
+            throw new RuntimeException(e);
+        }
+        try {
+            movieTitleRaf = new RandomAccessFile(catalog.getCatalog(2).get("filename"), "rwd");
         } catch (IOException e) {
             System.out.println("Error in RAF, file cannot be created");
             throw new RuntimeException(e);
@@ -41,12 +55,12 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public Page getPage(int pageId) {
+    public Page getPage(int pageId, int index) {
         // Logic to fetch a page from buffer
-
+        Pair<Integer, Integer> pair = new Pair(pageId, index);
         // if page id already in buffer then move it to front and increment the pin counter
-        if (pageHash.containsKey(pageId)) {
-            DLLNode currNode = pageHash.get(pageId);
+        if (pageHash.containsKey(pair)) {
+            DLLNode currNode = pageHash.get(pair);
             bringPageFront(currNode);
             currNode.pinCount++;
             return currNode.page;
@@ -60,15 +74,15 @@ public class BufferManagerImpl extends BufferManager {
                 }
             }
             try {
-                Page page = readPage(pageId);
+                Page page = readPage(pageId, index);
 
                 // if page is null then page with the page id not found return null
                 if (page == null) {
                     logger.error("Page not found: {}", pageId);
                     return null;
                 }
-                DLLNode currNode = new DLLNode(page);
-                addNewPage(pageId, currNode);
+                DLLNode currNode = new DLLNode(page, index);
+                addNewPage(pair, currNode);
                 return page;
             } catch (IOException e) {
                 logger.error("Cannot read file");
@@ -79,7 +93,7 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public Page createPage() {
+    public Page createPage(int index) {
         // Logic to create a new page
 
         if (pageHash.size() > bufferSize - 1) {
@@ -89,40 +103,57 @@ public class BufferManagerImpl extends BufferManager {
                 return null;
             }
         }
-        Page page = new PageImpl(pageCount++);
-        DLLNode currNode = new DLLNode(page);
-        addNewPage(page.getPid(), currNode);
-        markDirty(page.getPid());
+        int pageCount = Integer.parseInt(catalog.getCatalog(index).get("totalPages"));
+        Page page;
+        if(index == 0) {
+            page = new DataPage(pageCount++);
+        }
+        else if(index == 1){
+            page = new IndexPage(pageCount++);
+        }
+        else{
+            page = new IndexPage(pageCount++);
+        }
+        catalog.setCatalog(index, "totalPages", String.valueOf(pageCount));
+        DLLNode currNode = new DLLNode(page, index);
+        addNewPage(new Pair<>(pageCount, index), currNode);
+        markDirty(page.getPid(), index);
         return page;
     }
 
     @Override
-    public void markDirty(int pageId) {
+    public void markDirty(int pageId, int index) {
         // Mark page as dirty
-        if (pageHash.containsKey(pageId)) {
-            pageHash.get(pageId).isDirty = true;
+        Pair<Integer, Integer> pair = new Pair<>(pageId, index);
+        if (pageHash.containsKey(pair)) {
+            pageHash.get(pair).isDirty = true;
             return;
         }
         logger.error("Page not found: {}", pageId);
     }
 
     @Override
-    public void unpinPage(int pageId) {
+    public void unpinPage(int pageId, int index) {
         // Unpin page
-        if (pageHash.containsKey(pageId)) {
-            pageHash.get(pageId).pinCount--;
+        Pair<Integer, Integer> pair = new Pair<>(pageId, index);
+        if (pageHash.containsKey(pair)) {
+            pageHash.get(pair).pinCount--;
             return;
         }
         logger.error("Page not found: {}", pageId);
     }
 
     @Override
-    public void writeToBinaryFile(Page page) {
+    public void writeToBinaryFile(Page page, int index) {
+        RandomAccessFile raf;
+        if(index == 0) raf = dataRaf;
+        else if(index == 1) raf = movieIdIndexRaf;
+        else raf = movieTitleRaf;
         try {
             long offset = (long) (page.getPid()) * PAGE_SIZE;
             raf.seek(offset);
 
-            byte[] pageData = page.getRows();
+            byte[] pageData = page.getByteArray();
 
             raf.write(pageData);
             raf.getFD().sync();
@@ -138,7 +169,7 @@ public class BufferManagerImpl extends BufferManager {
     public void force() {
         while(headBufferPool != null){
             if(headBufferPool.isDirty) {
-                writeToBinaryFile(headBufferPool.page);
+                writeToBinaryFile(headBufferPool.page, headBufferPool.index);
             }
             headBufferPool = headBufferPool.next;
         }
@@ -174,9 +205,10 @@ public class BufferManagerImpl extends BufferManager {
         headBufferPool = currNode;
     }
 
-    private Page readPage(int pageId) throws IOException {
-        Page page = new PageImpl(pageId);
-        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "r")) {
+    private Page readPage(int pageId, int index) throws IOException {
+        // change implementation
+        Page page = new DataPage(pageId);
+        try (RandomAccessFile raf = new RandomAccessFile(DATA_INPUT_FILE, "r")) {
             long offset = (long) (pageId) * PAGE_SIZE;
             if (raf.length() <= offset) {
                 logger.error("Page not found: {}", pageId);
@@ -191,7 +223,7 @@ public class BufferManagerImpl extends BufferManager {
                 byte[] movieId = Arrays.copyOfRange(pageData, offsetInPage, offsetInPage + 9);
                 byte[] movieTitle = Arrays.copyOfRange(pageData, offsetInPage + 9, offsetInPage + 39);
                 Row row = new Row(movieId, movieTitle);
-                page.insertRow(row);
+                ((DataPage) page).insertRow(row);
             }
             // System.out.println(page.getRow(0));
             // System.out.println(page.getRow(PAGE_ROW_LIMIT - 1));
@@ -210,9 +242,9 @@ public class BufferManagerImpl extends BufferManager {
             return false;
         } else {
             if (unpinnedNode.isDirty) {
-                writeToBinaryFile(unpinnedNode.page);
+                writeToBinaryFile(unpinnedNode.page, unpinnedNode.index);
             }
-            pageHash.remove(unpinnedNode.page.getPid());
+            pageHash.remove(new Pair<>(unpinnedNode.page.getPid(), unpinnedNode.index));
             DLLNode prev = unpinnedNode.prev;
             DLLNode next = unpinnedNode.next;
             if (unpinnedNode == tailBufferPool) {
@@ -228,8 +260,8 @@ public class BufferManagerImpl extends BufferManager {
         return true;
     }
 
-    private void addNewPage(int pageId, DLLNode currNode) {
-        pageHash.put(pageId, currNode);
+    private void addNewPage(Pair<Integer, Integer> pair, DLLNode currNode) {
+        pageHash.put(pair, currNode);
         if (headBufferPool == tailBufferPool && tailBufferPool == null) {
             headBufferPool = currNode;
             tailBufferPool = currNode;
