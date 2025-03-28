@@ -1,6 +1,9 @@
 package com.database.finalproject.btree;
 
 import java.util.Iterator;
+
+import com.database.finalproject.model.Page;
+
 import java.util.Arrays;
 
 public class BTreeImpl<K extends Comparable<K>, V> {
@@ -163,7 +166,30 @@ public class BTreeImpl<K extends Comparable<K>, V> {
     }
 
     public Iterator<V> search(K key) {
+    BTreeImpl<K, V> currentNode = this;
+    
+    // Traverse down to the correct leaf node
+    while (!currentNode.isLeaf) {
+        int i;
+        for (i = 0; i < currentNode.num_nodes; i++) {
+            if (key.compareTo(currentNode.keys[i]) < 0) {
+                break;
+            }
+        }
+        //currentNode = bufferManager.getPage(currentNode.pointers[i]);
+        Page page = bufferManager.getPage(currentNode.pointers[i]);
+        currentNode = (BTreeImpl<K, V>) page;
+        
+    }
 
+    // Search for the key in the leaf node
+    for (int i = 0; i < currentNode.num_nodes; i++) {
+        if (currentNode.keys[i].equals(key)) {
+            return Arrays.asList(currentNode.recordIds[i]).iterator();
+        }
+    }
+    
+    return null; // Key not found
     }
 
     public Iterator<V> rangeSearch(K startKey, K endKey) {
