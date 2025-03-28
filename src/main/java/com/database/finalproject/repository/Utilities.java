@@ -2,12 +2,18 @@ package com.database.finalproject.repository;
 
 import com.database.finalproject.btree.BTree;
 import com.database.finalproject.buffermanager.BufferManager;
+import com.database.finalproject.model.DataPage;
 import com.database.finalproject.model.Page;
 import com.database.finalproject.model.Rid;
 import com.database.finalproject.model.Row;
+
+import javax.xml.crypto.Data;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
+
+import static com.database.finalproject.constants.PageConstants.PADDING_BYTE;
 
 public class Utilities {
 
@@ -15,7 +21,7 @@ public class Utilities {
         System.out.println("Opening file");
         try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
             System.out.println("File opened, loading dataset to file");
-            Page currPage = bf.createPage();
+            Page currPage = bf.createPage(0);
             int pageId = currPage.getPid();
 
             // Skip header line
@@ -33,14 +39,15 @@ public class Utilities {
                 }
 
                 Row row = new Row(movieId, movieTitle);
-                currPage.insertRow(row);
-                if (currPage.isFull()) {
-                    bf.unpinPage(pageId);
-                    currPage = bf.createPage();
+                ((DataPage)currPage).insertRow(row);
+                if (((DataPage)currPage).isFull()) {
+                    bf.unpinPage(pageId,0);
+                    currPage = bf.createPage(0);
                     pageId = currPage.getPid();
                 }
             }
-            bf.unpinPage(pageId);
+            bf.unpinPage(pageId, 0);
+            bf.force();
             System.out.println("Dataset loaded");
             System.out.println("Last Page ID: " + currPage.getPid());
 
@@ -50,7 +57,43 @@ public class Utilities {
     }
 
     public static void createMovieIdIndex(BufferManager bf, BTree<String, Rid> b){
+        int dataPageId = 0;
+        while(true){
+            Page currPage = bf.getPage(dataPageId, 1);
+            if(currPage == null) break;
+            for(int i = 0 ; i < 105; i++){
+                Row row = ((DataPage) currPage).getRow(i);
+                if(row == null) break;
+                b.insert(Arrays.toString(row.movieId()), new Rid(dataPageId, i));
+            }
+            bf.unpinPage(dataPageId, 1);
+            dataPageId++;
+        }
+    }
 
+    public static void createMovieTitleIndex(BufferManager bf, BTree<String, Rid> b){
+        int dataPageId = 0;
+        while(true){
+            Page currPage = bf.getPage(dataPageId, 2);
+            if(currPage == null) break;
+            for(int i = 0 ; i < 105; i++){
+                Row row = ((DataPage) currPage).getRow(i);
+                if(row == null) break;
+                b.insert(Arrays.toString(removeTrailingBytes(row.movieTitle())), new Rid(dataPageId, i));
+            }
+            bf.unpinPage(dataPageId, 2);
+            dataPageId++;
+        }
+    }
+    private static byte[] removeTrailingBytes(byte[] input) {
+        int endIndex = input.length;
+        for (int i = input.length - 1; i >= 0; i--) {
+            if (input[i] != PADDING_BYTE) {  // Only remove custom padding byte
+                endIndex = i + 1;
+                break;
+            }
+        }
+        return Arrays.copyOf(input,endIndex);
     }
 }
 

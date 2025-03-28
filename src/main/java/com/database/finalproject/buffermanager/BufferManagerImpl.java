@@ -109,10 +109,10 @@ public class BufferManagerImpl extends BufferManager {
             page = new DataPage(pageCount++);
         }
         else if(index == 1){
-            page = new IndexPage(pageCount++);
+            page = new MovieTitleIndexPage(pageCount++);
         }
         else{
-            page = new IndexPage(pageCount++);
+            page = new MovieTitleIndexPage(pageCount++);
         }
         catalog.setCatalog(index, "totalPages", String.valueOf(pageCount));
         DLLNode currNode = new DLLNode(page, index);
@@ -176,6 +176,11 @@ public class BufferManagerImpl extends BufferManager {
         pageHash.clear();
         headBufferPool = null;
         tailBufferPool = null;
+    }
+
+    @Override
+    public String getRootPageId(int index){
+        return catalog.getCatalog(index).get("rootPage");
     }
 
     private void bringPageFront(DLLNode currNode) {
