@@ -20,4 +20,8 @@ public class PageConstants {
     public static final String DATA_INPUT_FILE = "src/main/resources/static/data_binary_heap.bin";
     public static final String MOVIE_ID_INDEX_FILE = "src/main/resources/static/movie_id_binary_heap.bin";
 
+    public static final String DATABASE_CATALOGUE_KEY_FILENAME = "filename";
+    public static final String DATABASE_CATALOGUE_KEY_TOTAL_PAGES = "totalPages";
+    public static final String DATABASE_CATALOGUE_KEY_ROOT_PAGE = "rootPage";
+
 }

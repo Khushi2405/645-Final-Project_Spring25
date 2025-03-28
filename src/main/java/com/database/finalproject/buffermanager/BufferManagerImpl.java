@@ -111,7 +111,6 @@ public class BufferManagerImpl extends BufferManager {
         if(catalogIndex == DATA_PAGE_INDEX) {
             page = new DataPage(pageCount++);
         } else if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX) {
-            // TODO: movie id index page new class???
             page = new MovieIdIndexPage(pageCount++);
         } else {
             page = new MovieTitleIndexPage(pageCount++);
