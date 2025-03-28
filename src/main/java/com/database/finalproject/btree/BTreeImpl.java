@@ -14,11 +14,13 @@ public class BTreeImpl implements BTree<String, Rid> {
     BufferManager bf;
     int rootPageId;
     MovieTitleIndexPage rootPage;
-    public BTreeImpl(BufferManager bf) {
+    int catalogIndex;
+    public BTreeImpl(BufferManager bf, int catalogIndex) {
+        this.catalogIndex = catalogIndex;
         this.bf = bf;
-        rootPageId = Integer.parseInt(bf.getRootPageId(2));
-        rootPage = (MovieTitleIndexPage) bf.getPage(rootPageId, 2);
-        if(rootPage == null) rootPage = (MovieTitleIndexPage) bf.createPage(2);
+        rootPageId = Integer.parseInt(bf.getRootPageId(catalogIndex));
+        rootPage = (MovieTitleIndexPage) bf.getPage(rootPageId, catalogIndex);
+        if(rootPage == null) rootPage = (MovieTitleIndexPage) bf.createPage(catalogIndex);
     }
 
     @Override
@@ -37,7 +39,7 @@ public class BTreeImpl implements BTree<String, Rid> {
             while (i < nodePage.keys.size() && movieTitle.compareTo(Arrays.toString(removeTrailingBytes(nodePage.keys.get(i)))) > 0) {
                 i++;
             }
-            nodePage = (MovieTitleIndexPage) bf.getPage(bytesToInt(nodePage.pageIds.get(i)), 2);
+            nodePage = (MovieTitleIndexPage) bf.getPage(bytesToInt(nodePage.pageIds.get(i)), catalogIndex);
         }
         return nodePage;
     }
@@ -54,7 +56,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void splitLeafNode(MovieTitleIndexPage leafPage) {
         int mid = leafPage.keys.size() / 2;
-        MovieTitleIndexPage newLeafPage = (MovieTitleIndexPage) bf.createPage(2);
+        MovieTitleIndexPage newLeafPage = (MovieTitleIndexPage) bf.createPage(catalogIndex);
         newLeafPage.setIsLeaf(true);
         newLeafPage.keys.addAll(leafPage.keys.subList(mid, leafPage.keys.size()));
         newLeafPage.pageIds.addAll(leafPage.pageIds.subList(mid, leafPage.pageIds.size()));
@@ -64,7 +66,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         leafPage.pageIds.subList(mid, leafPage.pageIds.size()).clear();
         leafPage.slotIds.subList(mid, leafPage.slotIds.size()).clear();
 
-        MovieTitleIndexPage nextLeafPage = (MovieTitleIndexPage) bf.getPage(bytesToInt(leafPage.nextLeaf), 2);
+        MovieTitleIndexPage nextLeafPage = (MovieTitleIndexPage) bf.getPage(bytesToInt(leafPage.nextLeaf), catalogIndex);
         newLeafPage.nextLeaf = intToBytes(nextLeafPage.getPid(), PAGE_ID_SIZE);
         nextLeafPage.prevLeaf = intToBytes(newLeafPage.getPid(), PAGE_ID_SIZE);
         leafPage.nextLeaf = intToBytes(newLeafPage.getPid(), PAGE_ID_SIZE);
@@ -75,7 +77,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void insertIntoParent(MovieTitleIndexPage leftPage, byte[] key, MovieTitleIndexPage rightPage) {
         if (leftPage == rootPage) {
-            MovieTitleIndexPage newRootPage = (MovieTitleIndexPage) bf.createPage(2);
+            MovieTitleIndexPage newRootPage = (MovieTitleIndexPage) bf.createPage(catalogIndex);
             newRootPage.setIsLeaf(false);
             newRootPage.keys.add(key);
             newRootPage.pageIds.add(intToBytes(leftPage.getPid(), PAGE_ID_SIZE));
@@ -105,7 +107,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         for (byte[] n : node.pageIds) {
             int subChildPageId = bytesToInt(n);
             if (subChildPageId == child.getPid()) return node;
-            MovieTitleIndexPage subChild = (MovieTitleIndexPage) bf.getPage(subChildPageId,2);
+            MovieTitleIndexPage subChild = (MovieTitleIndexPage) bf.getPage(subChildPageId,catalogIndex);
             MovieTitleIndexPage parent = findParent(subChild, child);
             if (parent != null) return parent;
         }
@@ -114,7 +116,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void splitInternalNode(MovieTitleIndexPage node) {
         int mid = node.keys.size() / 2;
-        MovieTitleIndexPage newInternal = (MovieTitleIndexPage) bf.createPage(2);
+        MovieTitleIndexPage newInternal = (MovieTitleIndexPage) bf.createPage(catalogIndex);
         newInternal.setIsLeaf(false);
 
         newInternal.keys.addAll(node.keys.subList(mid + 1, node.keys.size()));
@@ -125,7 +127,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         node.pageIds.subList(mid + 1, node.pageIds.size()).clear();
 
         if (node == rootPage) {
-            MovieTitleIndexPage newRoot = (MovieTitleIndexPage) bf.createPage(2);
+            MovieTitleIndexPage newRoot = (MovieTitleIndexPage) bf.createPage(catalogIndex);
             newRoot.keys.add(promotedKey);
             newRoot.pageIds.add(intToBytes(node.getPid(), PAGE_ID_SIZE));
             newRoot.pageIds.add(intToBytes(newInternal.getPid(), PAGE_ID_SIZE));
@@ -190,7 +192,7 @@ public class BTreeImpl implements BTree<String, Rid> {
                     return result.iterator();
                 }
             }
-            leaf = (MovieTitleIndexPage) bf.getPage(bytesToInt(leaf.nextLeaf),2);
+            leaf = (MovieTitleIndexPage) bf.getPage(bytesToInt(leaf.nextLeaf),catalogIndex);
         }
         return result.iterator();
     }

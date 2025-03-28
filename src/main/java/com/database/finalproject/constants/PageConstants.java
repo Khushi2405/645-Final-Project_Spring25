@@ -14,8 +14,9 @@ public class PageConstants {
     public static final int MOVIE_ID_LEAF_NODE_ORDER = 291;
     public static final int MOVIE_TITLE_NON_LEAF_NODE_ORDER = 120;
     public static final int MOVIE_TITLE_LEAF_NODE_ORDER = 116;
-
-
+    public static final int DATA_PAGE_INDEX = 0;
+    public static final int MOVIE_ID_INDEX_PAGE_INDEX = 1;
+    public static final int MOVIE_TITLE_INDEX_INDEX = 2;
     public static final String DATA_INPUT_FILE = "src/main/resources/static/data_binary_heap.bin";
     public static final String MOVIE_ID_INDEX_FILE = "src/main/resources/static/movie_id_binary_heap.bin";
 

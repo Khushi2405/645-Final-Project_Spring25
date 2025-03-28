@@ -35,19 +35,19 @@ public class BufferManagerImpl extends BufferManager {
 
 
         try {
-            dataRaf = new RandomAccessFile(catalog.getCatalog(0).get("filename"), "rwd");
+            dataRaf = new RandomAccessFile(catalog.getCatalog(DATA_PAGE_INDEX).get("filename"), "rwd");
         } catch (IOException e) {
             System.out.println("Error in RAF, file cannot be created");
             throw new RuntimeException(e);
         }
         try {
-            movieIdIndexRaf = new RandomAccessFile(catalog.getCatalog(1).get("filename"), "rwd");
+            movieIdIndexRaf = new RandomAccessFile(catalog.getCatalog(MOVIE_ID_INDEX_PAGE_INDEX).get("filename"), "rwd");
         } catch (IOException e) {
             System.out.println("Error in RAF, file cannot be created");
             throw new RuntimeException(e);
         }
         try {
-            movieTitleRaf = new RandomAccessFile(catalog.getCatalog(2).get("filename"), "rwd");
+            movieTitleRaf = new RandomAccessFile(catalog.getCatalog(MOVIE_TITLE_INDEX_INDEX).get("filename"), "rwd");
         } catch (IOException e) {
             System.out.println("Error in RAF, file cannot be created");
             throw new RuntimeException(e);
@@ -55,9 +55,10 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public Page getPage(int pageId, int index) {
+    public Page getPage(int pageId, int ...index) {
         // Logic to fetch a page from buffer
-        Pair<Integer, Integer> pair = new Pair(pageId, index);
+        int catalogIndex = getCatalogIndex(index);
+        Pair<Integer, Integer> pair = new Pair(pageId, catalogIndex);
         // if page id already in buffer then move it to front and increment the pin counter
         if (pageHash.containsKey(pair)) {
             DLLNode currNode = pageHash.get(pair);
@@ -74,14 +75,14 @@ public class BufferManagerImpl extends BufferManager {
                 }
             }
             try {
-                Page page = readPage(pageId, index);
+                Page page = readPage(pageId, catalogIndex);
 
                 // if page is null then page with the page id not found return null
                 if (page == null) {
                     logger.error("Page not found: {}", pageId);
                     return null;
                 }
-                DLLNode currNode = new DLLNode(page, index);
+                DLLNode currNode = new DLLNode(page, catalogIndex);
                 addNewPage(pair, currNode);
                 return page;
             } catch (IOException e) {
@@ -93,8 +94,10 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public Page createPage(int index) {
+    public Page createPage(int ...index) {
         // Logic to create a new page
+
+        int catalogIndex = getCatalogIndex(index);
 
         if (pageHash.size() > bufferSize - 1) {
             if (!removeLRUNode()) {
@@ -103,28 +106,31 @@ public class BufferManagerImpl extends BufferManager {
                 return null;
             }
         }
-        int pageCount = Integer.parseInt(catalog.getCatalog(index).get("totalPages"));
+        int pageCount = Integer.parseInt(catalog.getCatalog(catalogIndex).get("totalPages"));
         Page page;
-        if(index == 0) {
+        if(catalogIndex == DATA_PAGE_INDEX) {
             page = new DataPage(pageCount++);
         }
-        else if(index == 1){
+        else if(catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX){
             page = new MovieTitleIndexPage(pageCount++);
         }
         else{
             page = new MovieTitleIndexPage(pageCount++);
         }
-        catalog.setCatalog(index, "totalPages", String.valueOf(pageCount));
-        DLLNode currNode = new DLLNode(page, index);
-        addNewPage(new Pair<>(pageCount, index), currNode);
+        catalog.setCatalog(catalogIndex, "totalPages", String.valueOf(pageCount));
+        DLLNode currNode = new DLLNode(page, catalogIndex);
+        addNewPage(new Pair<>(pageCount, catalogIndex), currNode);
         markDirty(page.getPid(), index);
         return page;
     }
 
     @Override
-    public void markDirty(int pageId, int index) {
+    public void markDirty(int pageId, int ...index) {
         // Mark page as dirty
-        Pair<Integer, Integer> pair = new Pair<>(pageId, index);
+
+        int catalogIndex = getCatalogIndex(index);
+
+        Pair<Integer, Integer> pair = new Pair<>(pageId, catalogIndex);
         if (pageHash.containsKey(pair)) {
             pageHash.get(pair).isDirty = true;
             return;
@@ -133,9 +139,10 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public void unpinPage(int pageId, int index) {
+    public void unpinPage(int pageId, int ...index) {
         // Unpin page
-        Pair<Integer, Integer> pair = new Pair<>(pageId, index);
+        int catalogIndex = getCatalogIndex(index);
+        Pair<Integer, Integer> pair = new Pair<>(pageId, catalogIndex);
         if (pageHash.containsKey(pair)) {
             pageHash.get(pair).pinCount--;
             return;
@@ -144,10 +151,11 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public void writeToBinaryFile(Page page, int index) {
+    public void writeToBinaryFile(Page page, int ...index) {
+        int catalogIndex = getCatalogIndex(index);
         RandomAccessFile raf;
-        if(index == 0) raf = dataRaf;
-        else if(index == 1) raf = movieIdIndexRaf;
+        if(catalogIndex == DATA_PAGE_INDEX) raf = dataRaf;
+        else if(catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX) raf = movieIdIndexRaf;
         else raf = movieTitleRaf;
         try {
             long offset = (long) (page.getPid()) * PAGE_SIZE;
@@ -179,8 +187,9 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public String getRootPageId(int index){
-        return catalog.getCatalog(index).get("rootPage");
+    public String getRootPageId(int ...index){
+        int catalogIndex = getCatalogIndex(index);
+        return catalog.getCatalog(catalogIndex).get("rootPage");
     }
 
     private void bringPageFront(DLLNode currNode) {
@@ -210,8 +219,9 @@ public class BufferManagerImpl extends BufferManager {
         headBufferPool = currNode;
     }
 
-    private Page readPage(int pageId, int index) throws IOException {
-        // change implementation
+    private Page readPage(int pageId, int ...index) throws IOException {
+        int catalogIndex = getCatalogIndex(index);
+        // TODO add read for all pages
         Page page = new DataPage(pageId);
         try (RandomAccessFile raf = new RandomAccessFile(DATA_INPUT_FILE, "r")) {
             long offset = (long) (pageId) * PAGE_SIZE;
@@ -282,6 +292,13 @@ public class BufferManagerImpl extends BufferManager {
 
     private static int binaryToDecimal(byte b) {
         return Integer.parseInt(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'), 2);
+    }
+
+    private int getCatalogIndex(int ...index){
+        int catalogIndex;
+        if(index.length == 0) catalogIndex = DATA_PAGE_INDEX;
+        else catalogIndex = index[0];
+        return catalogIndex;
     }
 
 }

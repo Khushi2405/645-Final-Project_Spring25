@@ -9,17 +9,17 @@ public abstract class BufferManager {
         this.bufferSize = bufferSize;
     }
 
-    public abstract Page getPage(int pageId, int index);
+    public abstract Page getPage(int pageId, int ...index);
 
-    public abstract Page createPage(int index);
+    public abstract Page createPage(int ...index);
 
-    public abstract void markDirty(int pageId, int index);
+    public abstract void markDirty(int pageId, int ...index);
 
-    public abstract void unpinPage(int pageId, int index);
+    public abstract void unpinPage(int pageId, int ...index);
 
-    public abstract void writeToBinaryFile(Page page, int index);
+    public abstract void writeToBinaryFile(Page page, int ...index);
 
     public abstract void force();
 
-    public abstract String getRootPageId(int index);
+    public abstract String getRootPageId(int ...index);
 }
