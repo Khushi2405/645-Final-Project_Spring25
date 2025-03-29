@@ -91,6 +91,8 @@ public class IndexPage implements Page{
         isLeaf = pageArray[0] == 1;
         int numKeys = pageArray[1];
         int offset = 2;
+        order = isLeaf ? (index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_LEAF_NODE_ORDER : MOVIE_TITLE_LEAF_NODE_ORDER)
+                : (index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_NON_LEAF_NODE_ORDER : MOVIE_TITLE_NON_LEAF_NODE_ORDER);
 
         // Read nextLeaf and prevLeaf (only for leaf nodes)
         if (isLeaf) {
