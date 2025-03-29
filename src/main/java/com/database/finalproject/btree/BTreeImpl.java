@@ -87,17 +87,20 @@ public class BTreeImpl implements BTree<String, Rid> {
         leafPage.pageIds.subList(mid, leafPage.pageIds.size()).clear();
         leafPage.slotIds.subList(mid, leafPage.slotIds.size()).clear();
 
-        IndexPage nextLeafPage = (IndexPage) bf.getPage(bytesToInt(leafPage.nextLeaf), catalogIndex);
-        newLeafPage.nextLeaf = intToBytes(nextLeafPage.getPid(), PAGE_ID_SIZE);
-        nextLeafPage.prevLeaf = intToBytes(newLeafPage.getPid(), PAGE_ID_SIZE);
+        int nextLeafId = bytesToInt(leafPage.nextLeaf);
+        if (nextLeafId != -1) {
+            IndexPage nextLeafPage = (IndexPage) bf.getPage(nextLeafId, catalogIndex);
+            newLeafPage.nextLeaf = intToBytes(nextLeafPage.getPid(), PAGE_ID_SIZE);
+            nextLeafPage.prevLeaf = intToBytes(newLeafPage.getPid(), PAGE_ID_SIZE);
+
+            bf.markDirty(nextLeafPage.getPid(), catalogIndex);
+            bf.unpinPage(nextLeafPage.getPid(), catalogIndex);
+        }
         leafPage.nextLeaf = intToBytes(newLeafPage.getPid(), PAGE_ID_SIZE);
         newLeafPage.prevLeaf = intToBytes(leafPage.getPid(), PAGE_ID_SIZE);
 
         // mark dirty and unpin leaf nodes
-        bf.markDirty(nextLeafPage.getPid(), catalogIndex);
-
         bf.unpinPage(newLeafPage.getPid(), catalogIndex);
-        bf.unpinPage(nextLeafPage.getPid(), catalogIndex);
 
         insertIntoParent(leafPage, newLeafPage.keys.get(0), newLeafPage);
     }

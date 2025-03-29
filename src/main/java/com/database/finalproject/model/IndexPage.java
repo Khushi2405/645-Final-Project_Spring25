@@ -29,6 +29,10 @@ public class IndexPage implements Page{
         nextLeaf = new byte[PAGE_ID_SIZE];
         prevLeaf = new byte[PAGE_ID_SIZE];
 
+        // Fill with -1 (0xFF)
+        Arrays.fill(nextLeaf, (byte) 0xFF);
+        Arrays.fill(prevLeaf, (byte) 0xFF);
+
     }
 
     public void setIsLeaf(boolean leaf) {
