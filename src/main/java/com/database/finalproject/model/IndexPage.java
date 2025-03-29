@@ -6,7 +6,7 @@ import java.util.List;
 
 import static com.database.finalproject.constants.PageConstants.*;
 
-public class MovieTitleIndexPage implements Page{
+public class IndexPage implements Page{
 
     private final int pageId;
     boolean isLeaf;
@@ -17,9 +17,11 @@ public class MovieTitleIndexPage implements Page{
     public byte[] prevLeaf;
 
     int order;
+    int index;
     // Used only for leaf nodes
 
-    public MovieTitleIndexPage(int pageId) {
+    public IndexPage(int pageId, int index) {
+        this.index = index;
         this.pageId = pageId;
         keys = new ArrayList<>();
         pageIds = new ArrayList<>();
@@ -31,7 +33,8 @@ public class MovieTitleIndexPage implements Page{
 
     public void setIsLeaf(boolean leaf) {
         isLeaf = leaf;
-        order = isLeaf ? MOVIE_TITLE_LEAF_NODE_ORDER : MOVIE_TITLE_NON_LEAF_NODE_ORDER;
+        order = isLeaf ? (index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_LEAF_NODE_ORDER : MOVIE_TITLE_LEAF_NODE_ORDER):
+                (index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_NON_LEAF_NODE_ORDER : MOVIE_TITLE_NON_LEAF_NODE_ORDER);
     }
 
     public boolean getIsLeaf(){
@@ -60,8 +63,8 @@ public class MovieTitleIndexPage implements Page{
             offset += PAGE_ID_SIZE;
         }
         for (byte[] key : keys) {
-            System.arraycopy(key, 0, pageArray, offset, MOVIE_TITLE_SIZE);
-            offset += MOVIE_TITLE_SIZE;
+            System.arraycopy(key, 0, pageArray, offset, index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_SIZE : MOVIE_TITLE_SIZE);
+            offset += index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_SIZE : MOVIE_TITLE_SIZE;
         }
 
         // Store all page IDs sequentially
@@ -101,9 +104,9 @@ public class MovieTitleIndexPage implements Page{
         keys.clear();
         for (int i = 0; i < numKeys; i++) {
             byte[] key = new byte[MOVIE_TITLE_SIZE];
-            System.arraycopy(pageArray, offset, key, 0, MOVIE_TITLE_SIZE);
+            System.arraycopy(pageArray, offset, key, 0, index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_SIZE : MOVIE_TITLE_SIZE);
             keys.add(key);
-            offset += MOVIE_TITLE_SIZE;
+            offset += index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_SIZE : MOVIE_TITLE_SIZE;
         }
 
         // Read all page IDs

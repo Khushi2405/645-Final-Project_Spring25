@@ -112,10 +112,10 @@ public class BufferManagerImpl extends BufferManager {
             page = new DataPage(pageCount++);
         }
         else if(catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX){
-            page = new MovieTitleIndexPage(pageCount++);
+            page = new IndexPage(pageCount++, MOVIE_ID_INDEX_PAGE_INDEX);
         }
         else{
-            page = new MovieTitleIndexPage(pageCount++);
+            page = new IndexPage(pageCount++, MOVIE_TITLE_INDEX_INDEX);
         }
         catalog.setCatalog(catalogIndex, "totalPages", String.valueOf(pageCount));
         DLLNode currNode = new DLLNode(page, catalogIndex);
