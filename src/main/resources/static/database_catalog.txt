@@ -1,3 +1,3 @@
-src/main/resources/static/data_binary_heap.bin,0,0
-src/main/resources/static/movie_id_index.bin,0,0
-src/main/resources/static/movie_title_index.bin,0,0
+src/main/resources/static/data_binary_heap.bin,13,0
+src/main/resources/static/movie_id_index.bin,1,0
+src/main/resources/static/movie_title_index.bin,1,0

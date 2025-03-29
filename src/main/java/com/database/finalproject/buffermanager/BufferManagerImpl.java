@@ -119,7 +119,7 @@ public class BufferManagerImpl extends BufferManager {
         }
         catalog.setCatalog(catalogIndex, "totalPages", String.valueOf(pageCount));
         DLLNode currNode = new DLLNode(page, catalogIndex);
-        addNewPage(new Pair<>(pageCount, catalogIndex), currNode);
+        addNewPage(new Pair<>(page.getPid(), catalogIndex), currNode);
         markDirty(page.getPid(), index);
         return page;
     }
@@ -189,7 +189,19 @@ public class BufferManagerImpl extends BufferManager {
     @Override
     public String getRootPageId(int ...index){
         int catalogIndex = getCatalogIndex(index);
-        return catalog.getCatalog(catalogIndex).get("rootPage");
+        return catalog.getCatalog(catalogIndex).get(DATABASE_CATALOGUE_KEY_ROOT_PAGE);
+    }
+
+    @Override
+    public void setRootPageId(int rootPageId, int... index) {
+        int catalogIndex = getCatalogIndex(index);
+        catalog.setCatalog(catalogIndex, DATABASE_CATALOGUE_KEY_ROOT_PAGE, String.valueOf(rootPageId));
+    }
+
+    @Override
+    public String getFilePath(int index) {
+        int catalogIndex = getCatalogIndex(index);
+        return catalog.getCatalog(catalogIndex).get(DATABASE_CATALOGUE_KEY_FILENAME);
     }
 
     private void bringPageFront(DLLNode currNode) {
@@ -219,11 +231,19 @@ public class BufferManagerImpl extends BufferManager {
         headBufferPool = currNode;
     }
 
-    private Page readPage(int pageId, int ...index) throws IOException {
+    private Page readPage(int pageId, int... index) throws IOException {
         int catalogIndex = getCatalogIndex(index);
-        // TODO add read for all pages
-        Page page = new DataPage(pageId);
-        try (RandomAccessFile raf = new RandomAccessFile(DATA_INPUT_FILE, "r")) {
+        // TODO: read mode
+        RandomAccessFile raf;
+        if (catalogIndex == DATA_PAGE_INDEX)
+            raf = dataRaf;
+        else if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX)
+            raf = movieIdIndexRaf;
+        else
+            raf = movieTitleRaf;
+
+        Page page = null;
+        try {
             long offset = (long) (pageId) * PAGE_SIZE;
             if (raf.length() <= offset) {
                 logger.error("Page not found: {}", pageId);
@@ -232,16 +252,44 @@ public class BufferManagerImpl extends BufferManager {
             raf.seek(offset);
             byte[] pageData = new byte[PAGE_SIZE]; // Buffer to hold 4096 bytes (one page)
             raf.readFully(pageData);
-            int nextRow = binaryToDecimal(pageData[PAGE_SIZE - 1]);
-            for (int i = 0; i < nextRow; i++) {
-                int offsetInPage = i * 39;
-                byte[] movieId = Arrays.copyOfRange(pageData, offsetInPage, offsetInPage + 9);
-                byte[] movieTitle = Arrays.copyOfRange(pageData, offsetInPage + 9, offsetInPage + 39);
-                Row row = new Row(movieId, movieTitle);
-                ((DataPage) page).insertRow(row);
+
+            if (catalogIndex == DATA_PAGE_INDEX) {
+                page = readDataPage(pageId, pageData);
+            } else {
+                page = readIndexPage(pageId, pageData, catalogIndex);
             }
             // System.out.println(page.getRow(0));
             // System.out.println(page.getRow(PAGE_ROW_LIMIT - 1));
+        } catch (IOException e) {
+            logger.error("Cannot read file");
+            return null;
+        }
+        return page;
+    }
+
+    // read data page
+    private Page readDataPage(int pageId, byte[] pageData) {
+        Page page = new DataPage(pageId);
+        int nextRow = binaryToDecimal(pageData[PAGE_SIZE - 1]);
+        for (int i = 0; i < nextRow; i++) {
+            int offsetInPage = i * 39;
+            byte[] movieId = Arrays.copyOfRange(pageData, offsetInPage, offsetInPage + 9);
+            byte[] movieTitle = Arrays.copyOfRange(pageData, offsetInPage + 9, offsetInPage + 39);
+            Row row = new Row(movieId, movieTitle);
+            ((DataPage) page).insertRow(row);
+        }
+        return page;
+    }
+
+    // read index page
+    private Page readIndexPage(int pageId, byte[] pageData, int catalogIndex) {
+        Page page;
+        if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX) {
+            page = new IndexPage(pageId, MOVIE_ID_INDEX_PAGE_INDEX);
+            ((IndexPage) page).setByteArray(pageData);
+        } else {
+            page = new IndexPage(pageId, MOVIE_TITLE_INDEX_INDEX);
+            ((IndexPage) page).setByteArray(pageData);
         }
         return page;
     }

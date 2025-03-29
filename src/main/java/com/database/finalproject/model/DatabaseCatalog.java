@@ -1,5 +1,9 @@
 package com.database.finalproject.model;
 
+import static com.database.finalproject.constants.PageConstants.DATABASE_CATALOGUE_KEY_FILENAME;
+import static com.database.finalproject.constants.PageConstants.DATABASE_CATALOGUE_KEY_ROOT_PAGE;
+import static com.database.finalproject.constants.PageConstants.DATABASE_CATALOGUE_KEY_TOTAL_PAGES;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,9 +26,9 @@ public class DatabaseCatalog {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
                 Map<String, String> entry = new HashMap<>();
-                entry.put("filename", parts[0]);
-                entry.put("totalPages", parts[1]);
-                entry.put("rootPage", parts[2]);
+                entry.put(DATABASE_CATALOGUE_KEY_FILENAME, parts[0]);
+                entry.put(DATABASE_CATALOGUE_KEY_TOTAL_PAGES, parts[1]);
+                entry.put(DATABASE_CATALOGUE_KEY_ROOT_PAGE, parts[2]);
                 catalog.add(entry);
             }
         } catch (IOException e) {
@@ -33,12 +37,14 @@ public class DatabaseCatalog {
     }
 
     public Map<String, String> getCatalog(int index) {
-        if(index == catalog.size()) return null;
+        if (index == catalog.size())
+            return null;
         return catalog.get(index);
     }
 
-    public void setCatalog(int index, String key, String value){
-        if(index == catalog.size()) return;
+    public void setCatalog(int index, String key, String value) {
+        if (index == catalog.size())
+            return;
         catalog.get(index).put(key, value);
         saveCatalog();
     }
@@ -46,7 +52,9 @@ public class DatabaseCatalog {
     public void saveCatalog() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(catalogFile))) {
             for (Map<String, String> entry : catalog) {
-                writer.write(entry.get("filename") + "," + entry.get("totalPages") + "," + entry.get("rootPage") + "\n");
+                writer.write(
+                        entry.get(DATABASE_CATALOGUE_KEY_FILENAME) + "," + entry.get(DATABASE_CATALOGUE_KEY_TOTAL_PAGES)
+                                + "," + entry.get(DATABASE_CATALOGUE_KEY_ROOT_PAGE) + "\n");
             }
         } catch (IOException e) {
             e.printStackTrace();

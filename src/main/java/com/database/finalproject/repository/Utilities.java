@@ -13,6 +13,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static com.database.finalproject.constants.PageConstants.DATA_PAGE_INDEX;
 import static com.database.finalproject.constants.PageConstants.PADDING_BYTE;
 
 public class Utilities {
@@ -21,7 +22,7 @@ public class Utilities {
         System.out.println("Opening file");
         try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
             System.out.println("File opened, loading dataset to file");
-            Page currPage = bf.createPage(0);
+            Page currPage = bf.createPage(DATA_PAGE_INDEX);
             int pageId = currPage.getPid();
 
             // Skip header line
@@ -39,14 +40,14 @@ public class Utilities {
                 }
 
                 Row row = new Row(movieId, movieTitle);
-                ((DataPage)currPage).insertRow(row);
-                if (((DataPage)currPage).isFull()) {
-                    bf.unpinPage(pageId,0);
-                    currPage = bf.createPage(0);
+                ((DataPage) currPage).insertRow(row);
+                if (((DataPage) currPage).isFull()) {
+                    bf.unpinPage(pageId, DATA_PAGE_INDEX);
+                    currPage = bf.createPage(DATA_PAGE_INDEX);
                     pageId = currPage.getPid();
                 }
             }
-            bf.unpinPage(pageId, 0);
+            bf.unpinPage(pageId, DATA_PAGE_INDEX);
             bf.force();
             System.out.println("Dataset loaded");
             System.out.println("Last Page ID: " + currPage.getPid());
@@ -56,44 +57,50 @@ public class Utilities {
         }
     }
 
-    public static void createMovieIdIndex(BufferManager bf, BTree<String, Rid> b){
+    public static void createMovieIdIndex(BufferManager bf, BTree<String, Rid> b) {
         int dataPageId = 0;
-        while(true){
-            Page currPage = bf.getPage(dataPageId, 1);
-            if(currPage == null) break;
-            for(int i = 0 ; i < 105; i++){
+        while (true) {
+            Page currPage = bf.getPage(dataPageId, DATA_PAGE_INDEX);
+            if (currPage == null)
+                break;
+            for (int i = 0; i < 105; i++) {
                 Row row = ((DataPage) currPage).getRow(i);
-                if(row == null) break;
+                if (row == null)
+                    break;
                 b.insert(Arrays.toString(row.movieId()), new Rid(dataPageId, i));
             }
-            bf.unpinPage(dataPageId, 1);
+            bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
             dataPageId++;
         }
+        bf.force();
     }
 
-    public static void createMovieTitleIndex(BufferManager bf, BTree<String, Rid> b){
+    public static void createMovieTitleIndex(BufferManager bf, BTree<String, Rid> b) {
         int dataPageId = 0;
-        while(true){
-            Page currPage = bf.getPage(dataPageId, 2);
-            if(currPage == null) break;
-            for(int i = 0 ; i < 105; i++){
+        while (true) {
+            Page currPage = bf.getPage(dataPageId, DATA_PAGE_INDEX);
+            if (currPage == null)
+                break;
+            for (int i = 0; i < 105; i++) {
                 Row row = ((DataPage) currPage).getRow(i);
-                if(row == null) break;
+                if (row == null)
+                    break;
                 b.insert(Arrays.toString(removeTrailingBytes(row.movieTitle())), new Rid(dataPageId, i));
             }
-            bf.unpinPage(dataPageId, 2);
+            bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
             dataPageId++;
         }
+        bf.force();
     }
+
     private static byte[] removeTrailingBytes(byte[] input) {
         int endIndex = input.length;
         for (int i = input.length - 1; i >= 0; i--) {
-            if (input[i] != PADDING_BYTE) {  // Only remove custom padding byte
+            if (input[i] != PADDING_BYTE) { // Only remove custom padding byte
                 endIndex = i + 1;
                 break;
             }
         }
-        return Arrays.copyOf(input,endIndex);
+        return Arrays.copyOf(input, endIndex);
     }
 }
-
