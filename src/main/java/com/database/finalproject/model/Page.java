@@ -6,7 +6,7 @@ public interface Page {
 //    Row getRow(int rowId);
 //    int insertRow(Row row);
 //    boolean isFull();
-    byte[] pageArray = new byte[PAGE_SIZE];
+
 
     int getPid();
     byte[] getByteArray();

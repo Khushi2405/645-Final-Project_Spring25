@@ -36,6 +36,7 @@ public class BufferManagerImpl extends BufferManager {
 
         try {
             dataRaf = new RandomAccessFile(catalog.getCatalog(DATA_PAGE_INDEX).get("filename"), "rwd");
+            System.out.println(dataRaf.length()/PAGE_SIZE);
         } catch (IOException e) {
             System.out.println("Error in RAF, file cannot be created");
             throw new RuntimeException(e);
@@ -347,6 +348,15 @@ public class BufferManagerImpl extends BufferManager {
         if(index.length == 0) catalogIndex = DATA_PAGE_INDEX;
         else catalogIndex = index[0];
         return catalogIndex;
+    }
+
+    public void printList(){
+        DLLNode node = headBufferPool;
+        while(node != null){
+            System.out.print(node.page.getPid() + " ");
+            node = node.next;
+        }
+        System.out.println();
     }
 
 }
