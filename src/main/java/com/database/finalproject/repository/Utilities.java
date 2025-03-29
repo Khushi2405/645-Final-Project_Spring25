@@ -72,6 +72,7 @@ public class Utilities {
             bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
             dataPageId++;
         }
+        bf.force();
     }
 
     public static void createMovieTitleIndex(BufferManager bf, BTree<String, Rid> b) {
@@ -89,6 +90,7 @@ public class Utilities {
             bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
             dataPageId++;
         }
+        bf.force();
     }
 
     private static byte[] removeTrailingBytes(byte[] input) {

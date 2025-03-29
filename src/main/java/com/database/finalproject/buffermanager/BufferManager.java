@@ -22,4 +22,7 @@ public abstract class BufferManager {
     public abstract void force();
 
     public abstract String getRootPageId(int ...index);
+
+    public abstract void setRootPageId(int rootPageId, int ...index);
+    public abstract String getFilePath(int index);
 }

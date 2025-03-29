@@ -110,14 +110,16 @@ public class BufferManagerImpl extends BufferManager {
         Page page;
         if(catalogIndex == DATA_PAGE_INDEX) {
             page = new DataPage(pageCount++);
-        } else if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX) {
-            page = new MovieIdIndexPage(pageCount++);
-        } else {
-            page = new MovieTitleIndexPage(pageCount++);
+        }
+        else if(catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX){
+            page = new IndexPage(pageCount++, MOVIE_ID_INDEX_PAGE_INDEX);
+        }
+        else{
+            page = new IndexPage(pageCount++, MOVIE_TITLE_INDEX_INDEX);
         }
         catalog.setCatalog(catalogIndex, "totalPages", String.valueOf(pageCount));
         DLLNode currNode = new DLLNode(page, catalogIndex);
-        addNewPage(new Pair<>(pageCount, catalogIndex), currNode);
+        addNewPage(new Pair<>(page.getPid(), catalogIndex), currNode);
         markDirty(page.getPid(), index);
         return page;
     }
@@ -187,7 +189,19 @@ public class BufferManagerImpl extends BufferManager {
     @Override
     public String getRootPageId(int ...index){
         int catalogIndex = getCatalogIndex(index);
-        return catalog.getCatalog(catalogIndex).get("rootPage");
+        return catalog.getCatalog(catalogIndex).get(DATABASE_CATALOGUE_KEY_ROOT_PAGE);
+    }
+
+    @Override
+    public void setRootPageId(int rootPageId, int... index) {
+        int catalogIndex = getCatalogIndex(index);
+        catalog.setCatalog(catalogIndex, DATABASE_CATALOGUE_KEY_ROOT_PAGE, String.valueOf(rootPageId));
+    }
+
+    @Override
+    public String getFilePath(int index) {
+        int catalogIndex = getCatalogIndex(index);
+        return catalog.getCatalog(catalogIndex).get(DATABASE_CATALOGUE_KEY_FILENAME);
     }
 
     private void bringPageFront(DLLNode currNode) {
@@ -271,11 +285,11 @@ public class BufferManagerImpl extends BufferManager {
     private Page readIndexPage(int pageId, byte[] pageData, int catalogIndex) {
         Page page;
         if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX) {
-            page = new MovieIdIndexPage(pageId);
-            ((MovieIdIndexPage) page).setByteArray(pageData);
+            page = new IndexPage(pageId, MOVIE_ID_INDEX_PAGE_INDEX);
+            ((IndexPage) page).setByteArray(pageData);
         } else {
-            page = new MovieTitleIndexPage(pageId);
-            ((MovieTitleIndexPage) page).setByteArray(pageData);
+            page = new IndexPage(pageId, MOVIE_TITLE_INDEX_INDEX);
+            ((IndexPage) page).setByteArray(pageData);
         }
         return page;
     }
