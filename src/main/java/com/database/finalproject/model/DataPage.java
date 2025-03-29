@@ -8,6 +8,7 @@ import java.util.Arrays;
 public class DataPage implements Page {
 
 //    private final byte[] rows;
+    private byte[] pageArray = new byte[PAGE_SIZE];
     private final int pageId;
 
     public DataPage(int pageId) {

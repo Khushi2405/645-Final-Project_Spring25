@@ -7,7 +7,7 @@ import java.util.List;
 import static com.database.finalproject.constants.PageConstants.*;
 
 public class IndexPage implements Page{
-
+    private byte[] pageArray = new byte[PAGE_SIZE];
     private final int pageId;
     boolean isLeaf;
     public List<byte[]> keys;

@@ -1,6 +1,6 @@
 package com.database.finalproject.buffermanager;
 
-import static com.database.finalproject.constants.PageConstants.INPUT_FILE;
+import static com.database.finalproject.constants.PageConstants.DATA_INPUT_FILE;
 import static com.database.finalproject.constants.PageConstants.PAGE_SIZE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.spy;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.database.finalproject.model.Page;
+import com.database.finalproject.model.DataPage;
 import com.database.finalproject.model.Row;
 import com.database.finalproject.repository.Utilities;
 import org.junit.jupiter.api.TestInstance;
@@ -38,29 +38,29 @@ class BufferManagerE2ETest {
     void testBufferManagerCapacity() {
         // Utilities.loadDataset(bufferManager,
         // "src/main/resources/static/title.basics.tsv");
-        Page page1 = bufferManager.getPage(1);
+        DataPage page1 = (DataPage) bufferManager.getPage(1);
         assertNotNull(page1, "Page1 should be in the buffer pool");
-        Page page2 = bufferManager.getPage(2);
+        DataPage page2 = (DataPage) bufferManager.getPage(2);
         assertNotNull(page2, "Page2 should be in the buffer pool");
-        Page page3 = bufferManager.getPage(3);
+        DataPage page3 = (DataPage) bufferManager.getPage(3);
         assertNotNull(page3, "Page3 should be in the buffer pool");
-        Page page4 = bufferManager.getPage(4);
+        DataPage page4 = (DataPage) bufferManager.getPage(4);
         assertNotNull(page4, "Page4 should be in the buffer pool");
-        Page page5 = bufferManager.getPage(5);
+        DataPage page5 = (DataPage) bufferManager.getPage(5);
         assertNotNull(page5, "Page5 should be in the buffer pool");
 
-        Page page6 = bufferManager.getPage(6);
+        DataPage page6 = (DataPage) bufferManager.getPage(6);
         assertNull(page6, "Page6 should not be in the buffer pool");
 
         bufferManager.unpinPage(5);
 
-        Page getPage6 = bufferManager.getPage(6);
+        DataPage getPage6 = (DataPage) bufferManager.getPage(6);
         assertNotNull(getPage6, "Page6 should be in the buffer pool");
 
         //bufferManager.markDirty(1);
         bufferManager.unpinPage(1);
 
-        Page page7 = bufferManager.getPage(7);
+        DataPage page7 = (DataPage) bufferManager.getPage(7);
 
         assertNotNull(page7, "Page7 should be in the buffer pool");
 
@@ -78,7 +78,7 @@ class BufferManagerE2ETest {
 
     public void testConsecutiveInsertsAndQueries() {
         // Create a new page and insert rows
-        Page page = bufferManager.createPage();
+        DataPage page = (DataPage) bufferManager.createPage();
         int pageId = page.getPid();
         Row row1 = new Row("tt0000001".getBytes(), "Movie One".getBytes());
         page.insertRow(row1);
@@ -86,11 +86,11 @@ class BufferManagerE2ETest {
         bufferManager.unpinPage(pageId);
 
         // Force eviction by filling the buffer pool
-        Page page15 = bufferManager.getPage(15);
-        Page page16 = bufferManager.getPage(16);
-        Page page17 = bufferManager.getPage(17);
-        Page page18 = bufferManager.getPage(18);
-        Page page19 = bufferManager.getPage(19);
+        DataPage page15 = (DataPage) bufferManager.getPage(15);
+        DataPage page16 = (DataPage) bufferManager.getPage(16);
+        DataPage page17 = (DataPage) bufferManager.getPage(17);
+        DataPage page18 = (DataPage) bufferManager.getPage(18);
+        DataPage page19 = (DataPage) bufferManager.getPage(19);
         bufferManager.unpinPage(page15.getPid());
         bufferManager.unpinPage(page16.getPid());
         bufferManager.unpinPage(page17.getPid());
@@ -98,7 +98,7 @@ class BufferManagerE2ETest {
         bufferManager.unpinPage(page19.getPid());
 
         // Reload the page and verify the inserted row
-        Page reloadedPage = bufferManager.getPage(pageId);
+        DataPage reloadedPage = (DataPage) bufferManager.getPage(pageId);
         bufferManager.unpinPage(reloadedPage.getPid());
         assertEquals(reloadedPage.getPid(), pageId);
         assertEquals("Row{movieId=tt0000001, title=Movie One}", reloadedPage.getRow(0).toString());
@@ -107,7 +107,7 @@ class BufferManagerE2ETest {
 
     public void testInsertQueryEvictReloadInsertQuery() {
         // Create a new page
-        Page page = bufferManager.createPage();
+        DataPage page = (DataPage) bufferManager.createPage();
         int pageId = page.getPid();
 
         // Insert 2 rows
@@ -124,11 +124,11 @@ class BufferManagerE2ETest {
         bufferManager.unpinPage(pageId);
 
         // Fill the buffer pool to force eviction
-        Page page15 = bufferManager.getPage(15);
-        Page page16 = bufferManager.getPage(16);
-        Page page17 = bufferManager.getPage(17);
-        Page page18 = bufferManager.getPage(18);
-        Page page19 = bufferManager.getPage(19);
+        DataPage page15 = (DataPage) bufferManager.getPage(15);
+        DataPage page16 = (DataPage) bufferManager.getPage(16);
+        DataPage page17 = (DataPage) bufferManager.getPage(17);
+        DataPage page18 = (DataPage) bufferManager.getPage(18);
+        DataPage page19 = (DataPage) bufferManager.getPage(19);
         bufferManager.unpinPage(page15.getPid());
         bufferManager.unpinPage(page16.getPid());
         bufferManager.unpinPage(page17.getPid());
@@ -136,7 +136,7 @@ class BufferManagerE2ETest {
         bufferManager.unpinPage(page19.getPid());
 
         // Reload the page and insert 2 more rows
-        page = bufferManager.getPage(pageId);
+        page = (DataPage) bufferManager.getPage(pageId);
         Row row3 = new Row("tt0000003".getBytes(), "Movie Three".getBytes());
         Row row4 = new Row("tt0000004".getBytes(), "Movie Four".getBytes());
         page.insertRow(row3);
@@ -154,7 +154,7 @@ class BufferManagerE2ETest {
 
     public void testInsertQueryMarkDirtyEvictReload() {
         // Create a new page
-        Page page = bufferManager.createPage();
+        DataPage page = (DataPage) bufferManager.createPage();
         int pageId = page.getPid();
 
         // Insert 2 rows
@@ -172,11 +172,11 @@ class BufferManagerE2ETest {
 
         // Fill the buffer pool to force eviction
 
-        Page page15 = bufferManager.getPage(15);
-        Page page16 = bufferManager.getPage(16);
-        Page page17 = bufferManager.getPage(17);
-        Page page18 = bufferManager.getPage(18);
-        Page page19 = bufferManager.getPage(19);
+        DataPage page15 = (DataPage) bufferManager.getPage(15);
+        DataPage page16 = (DataPage) bufferManager.getPage(16);
+        DataPage page17 = (DataPage) bufferManager.getPage(17);
+        DataPage page18 = (DataPage) bufferManager.getPage(18);
+        DataPage page19 = (DataPage) bufferManager.getPage(19);
         bufferManager.unpinPage(page15.getPid());
         bufferManager.unpinPage(page16.getPid());
         bufferManager.unpinPage(page17.getPid());
@@ -184,7 +184,7 @@ class BufferManagerE2ETest {
         bufferManager.unpinPage(page19.getPid());
 
         // Reload the page and query the rows
-        Page reloadedPage = bufferManager.getPage(pageId);
+        DataPage reloadedPage = (DataPage) bufferManager.getPage(pageId);
         assertEquals("Row{movieId=tt0000001, title=Movie One}", reloadedPage.getRow(0).toString());
         assertEquals("Row{movieId=tt0000002, title=Movie Two}", reloadedPage.getRow(1).toString());
         bufferManager.unpinPage(reloadedPage.getPid());
@@ -193,36 +193,36 @@ class BufferManagerE2ETest {
 
     @Test // tests that fetching a page that does not exist returns null
     void testNonExistentPage(){
-        Page page = bufferManager.getPage(120000); // Non-existent page ID
+        DataPage page = (DataPage) bufferManager.getPage(120000); // Non-existent page ID
         assertNull(page, "Fetching a non-existent page should return null");
     }
 
     @Test // test that the dataset is getting loaded properly and pages are being fetched
           // correctly
     void testLoadDatasetAndVerifyPages(){
-        Page page1 = bufferManager.getPage(1);
-        assertNotNull(page1, "Page 1 should be pinned");
+        DataPage page1 = (DataPage) bufferManager.getPage(1);
+        assertNotNull(page1, "DataPage 1 should be pinned");
         bufferManager.unpinPage(page1.getPid());
     }
 
     @Test
     void testPinStillInBuffer() {
-        Page page = bufferManager.getPage(1);
+        DataPage page = (DataPage) bufferManager.getPage(1);
         int totalTime = 0;
         long totalIterations = 100;
         for (int i = 2; i <= 101; i++) {
             long startTime = System.nanoTime();
-            page = bufferManager.getPage(i);
+            page = (DataPage) bufferManager.getPage(i);
             long endTime = System.nanoTime();
             totalTime += endTime - startTime;
             bufferManager.unpinPage(i);
         }
         long avgTime = totalTime / totalIterations;
         long startTime = System.nanoTime();
-        page = bufferManager.getPage(1);
+        page = (DataPage) bufferManager.getPage(1);
         long endTime = System.nanoTime();
         long inBufferTime = endTime - startTime;
-        assertTrue(inBufferTime < avgTime, "Page 1 should be in the buffer " + avgTime + " " + inBufferTime);
+        assertTrue(inBufferTime < avgTime, "DataPage 1 should be in the buffer " + avgTime + " " + inBufferTime);
         bufferManager.unpinPage(page.getPid());
         bufferManager.unpinPage(page.getPid());
     }
@@ -232,9 +232,9 @@ class BufferManagerE2ETest {
 //        BufferManager bufferManager = new BufferManagerImpl(3);
 
         // Fetch a page and modify its contents
-        Page newpage = bufferManager.createPage();
+        DataPage newpage = (DataPage) bufferManager.createPage();
         int newPageId = newpage.getPid();
-//        Page page1 = bufferManager.getPage(1);
+//        DataPage page1 = bufferManager.getPage(1);
         Row row = new Row("tt9999999".getBytes(StandardCharsets.UTF_8),
                 "Test Movie".getBytes(StandardCharsets.UTF_8));
         newpage.insertRow(row);
@@ -254,11 +254,11 @@ class BufferManagerE2ETest {
 
 
         // Verify that the page is written to the binary file
-        try (RandomAccessFile raf = new RandomAccessFile(INPUT_FILE, "r")) {
+        try (RandomAccessFile raf = new RandomAccessFile(DATA_INPUT_FILE, "r")) {
             byte[] pageData = new byte[PAGE_SIZE];
             raf.seek((long) (newPageId) * PAGE_SIZE);
             raf.readFully(pageData);
-            assertNotNull(pageData, "Page should be written to the binary file");
+            assertNotNull(pageData, "DataPage should be written to the binary file");
         }
         catch (IOException e){
             System.out.println("Exception occurred " + e);
