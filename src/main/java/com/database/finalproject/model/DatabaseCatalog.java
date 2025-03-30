@@ -30,15 +30,17 @@ public class DatabaseCatalog {
     }
 
     private void loadCatalog(String catalogFile) {
-        try {
+        try (RandomAccessFile raf = new RandomAccessFile(catalogFile, "r")) {
             String line;
-            while ((line = this.raf.readLine()) != null) {
+            while ((line = raf.readLine()) != null) {
                 String[] parts = line.split(",");
-                Map<String, String> entry = new HashMap<>();
-                entry.put(DATABASE_CATALOGUE_KEY_FILENAME, parts[0]);
-                entry.put(DATABASE_CATALOGUE_KEY_TOTAL_PAGES, parts[1]);
-                entry.put(DATABASE_CATALOGUE_KEY_ROOT_PAGE, parts[2]);
-                catalog.add(entry);
+                if (parts.length == 3) { // Ensure correct splitting
+                    Map<String, String> entry = new HashMap<>();
+                    entry.put(DATABASE_CATALOGUE_KEY_FILENAME, parts[0].trim());
+                    entry.put(DATABASE_CATALOGUE_KEY_TOTAL_PAGES, parts[1].trim());
+                    entry.put(DATABASE_CATALOGUE_KEY_ROOT_PAGE, parts[2].trim());
+                    catalog.add(entry);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -62,7 +64,7 @@ public class DatabaseCatalog {
         try {
             this.raf.setLength(0);
             for (Map<String, String> entry : catalog) {
-                this.raf.writeChars(
+                this.raf.writeBytes(
                         entry.get(DATABASE_CATALOGUE_KEY_FILENAME) + "," +
                                 entry.get(DATABASE_CATALOGUE_KEY_TOTAL_PAGES)
                                 + "," + entry.get(DATABASE_CATALOGUE_KEY_ROOT_PAGE) + "\n");
