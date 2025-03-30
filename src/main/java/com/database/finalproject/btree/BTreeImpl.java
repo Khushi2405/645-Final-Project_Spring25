@@ -23,6 +23,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         rootPageId = Integer.parseInt(bf.getRootPageId(catalogIndex));
         if(rootPageId == -1) {
             IndexPage rootPage = (IndexPage) bf.createPage(catalogIndex);
+            rootPage.setIsLeaf(true);
             rootPageId = rootPage.getPid();
             bf.setRootPageId(rootPageId, catalogIndex);
             bf.unpinPage(rootPageId, catalogIndex);
@@ -49,7 +50,7 @@ public class BTreeImpl implements BTree<String, Rid> {
             bf.unpinPage(nodePage.getPid(), catalogIndex);
             int i = 0;
             //TODO greater than 0 or less than ?
-            while (i < nodePage.keys.size() && key.compareTo(Arrays.toString(removeTrailingBytes(nodePage.keys.get(i)))) < 0) {
+            while (i < nodePage.keys.size() && key.compareTo(new String(removeTrailingBytes(nodePage.keys.get(i)))) < 0) {
                 i++;
             }
             nodePage = (IndexPage) bf.getPage(bytesToInt(nodePage.pageIds.get(i)), catalogIndex);
@@ -59,7 +60,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void insertIntoLeaf(IndexPage leafPage, String key, int pageId, int slotId) {
         int i = 0;
-        while (i < leafPage.keys.size() &&  key.compareTo(Arrays.toString(removeTrailingBytes(leafPage.keys.get(i)))) < 0) {
+        while (i < leafPage.keys.size() &&  key.compareTo(new String(removeTrailingBytes(leafPage.keys.get(i)))) < 0) {
             i++;
         }
         leafPage.keys.add(i, truncateOrPadByteArray(key.getBytes(), catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_SIZE : MOVIE_TITLE_SIZE));
@@ -153,6 +154,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
         if (node.getPid() == rootPageId) {
             IndexPage newRoot = (IndexPage) bf.createPage(catalogIndex);
+            newRoot.setIsLeaf(false);
             newRoot.keys.add(promotedKey);
             newRoot.pageIds.add(intToBytes(node.getPid(), PAGE_ID_SIZE));
             newRoot.pageIds.add(intToBytes(newInternal.getPid(), PAGE_ID_SIZE));
@@ -188,7 +190,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         int index = binarySearch(leaf.keys, key);
         if (index >= 0) {
             List<Rid> result = new ArrayList<>();
-            while (index < leaf.keys.size() && key.compareTo(Arrays.toString(removeTrailingBytes(leaf.keys.get(index)))) == 0) {
+            while (index < leaf.keys.size() && key.compareTo(new String(removeTrailingBytes(leaf.keys.get(index)))) == 0) {
                 result.add(new Rid(bytesToInt(leaf.pageIds.get(index)), bytesToInt(leaf.slotIds.get(index))));
                 index++;
             }
@@ -201,7 +203,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         int low = 0, high = keys.size() - 1;
         while (low <= high) {
             int mid = (low + high) / 2;
-            int cmp = Arrays.toString(removeTrailingBytes(keys.get(mid))).compareTo(target);
+            int cmp = new String(removeTrailingBytes(keys.get(mid))).compareTo(target);
             if (cmp == 0) return mid;
             if (cmp < 0) low = mid + 1;
             else high = mid - 1;
@@ -216,9 +218,9 @@ public class BTreeImpl implements BTree<String, Rid> {
 
         while (leaf != null) {
             for (int i = 0; i < leaf.keys.size(); i++) {
-                if (Arrays.toString(removeTrailingBytes(leaf.keys.get(i))).compareTo(startKey) >= 0 && Arrays.toString(removeTrailingBytes(leaf.keys.get(i))).compareTo(endKey) <= 0) {
+                if (new String(removeTrailingBytes(leaf.keys.get(i))).compareTo(startKey) >= 0 && new String(removeTrailingBytes(leaf.keys.get(i))).compareTo(endKey) <= 0) {
                     result.add(new Rid(bytesToInt(leaf.pageIds.get(i)), bytesToInt(leaf.slotIds.get(i))));
-                } else if (Arrays.toString(removeTrailingBytes(leaf.keys.get(i))).compareTo(endKey) > 0) {
+                } else if (new String(removeTrailingBytes(leaf.keys.get(i))).compareTo(endKey) > 0) {
                     // unpin the current leaf and return result
                     bf.unpinPage(leaf.getPid(), catalogIndex);
                     return result.iterator();
@@ -232,7 +234,9 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
     public static byte[] intToBytes(int value, int capacity) {
-        return ByteBuffer.allocate(capacity).putInt(value).array();
+        ByteBuffer buffer = ByteBuffer.allocate(4); // Always allocate 4 bytes
+        buffer.putInt(value);
+        return Arrays.copyOfRange(buffer.array(), 4 - capacity, 4); // Extract the required bytes
     }
 
     // Convert a 4-byte array back to an integer

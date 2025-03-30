@@ -67,7 +67,7 @@ public class Utilities {
                 Row row = ((DataPage) currPage).getRow(i);
                 if (row == null)
                     break;
-                b.insert(Arrays.toString(row.movieId()), new Rid(dataPageId, i));
+                b.insert(new String(row.movieId()).trim(), new Rid(dataPageId, i));
             }
             bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
             dataPageId++;
