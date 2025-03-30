@@ -67,7 +67,7 @@ public class Utilities {
                 Row row = ((DataPage) currPage).getRow(i);
                 if (row == null)
                     break;
-                b.insert(new String(row.movieId()), new Rid(dataPageId, i));
+                b.insert(new String(row.movieId()).trim(), new Rid(dataPageId, i));
             }
             bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
             dataPageId++;
@@ -85,7 +85,7 @@ public class Utilities {
                 Row row = ((DataPage) currPage).getRow(i);
                 if (row == null)
                     break;
-                b.insert(new String(removeTrailingBytes(row.movieTitle())), new Rid(dataPageId, i));
+                b.insert(Arrays.toString(removeTrailingBytes(row.movieTitle())), new Rid(dataPageId, i));
             }
             bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
             dataPageId++;

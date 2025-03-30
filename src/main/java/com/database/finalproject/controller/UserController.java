@@ -25,7 +25,7 @@ public class UserController {
         this.bf = new BufferManagerImpl(bufferSize);
         this.movieIdBtree = new BTreeImpl(bf, MOVIE_ID_INDEX_PAGE_INDEX);
         this.movieTitleBtree = new BTreeImpl(bf, MOVIE_TITLE_INDEX_INDEX);
-        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
+        Utilities.loadDataset(bf, DATABASE_FILE);
         Utilities.createMovieIdIndex(bf, movieIdBtree);
         Utilities.createMovieTitleIndex(bf, movieTitleBtree);
     }
