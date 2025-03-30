@@ -29,6 +29,10 @@ public class IndexPage implements Page{
         nextLeaf = new byte[PAGE_ID_SIZE];
         prevLeaf = new byte[PAGE_ID_SIZE];
 
+        // Fill with -1 (0xFF)
+        Arrays.fill(nextLeaf, (byte) 0xFF);
+        Arrays.fill(prevLeaf, (byte) 0xFF);
+
     }
 
     public void setIsLeaf(boolean leaf) {
@@ -54,8 +58,10 @@ public class IndexPage implements Page{
     public byte[] getByteArray() {
         Arrays.fill(pageArray, (byte) 0);
         pageArray[0] = (byte) (isLeaf ? 1 : 0);
-        pageArray[1] = (byte) keys.size(); // Store number of keys
-        int offset = 2;
+        int numKeys = keys.size();
+        pageArray[1] = (byte) ((numKeys >> 8) & 0xFF); // Higher byte
+        pageArray[2] = (byte) (numKeys & 0xFF);// Store number of keys
+        int offset = 3;
         if (isLeaf) {
             System.arraycopy(nextLeaf, 0, pageArray, offset, PAGE_ID_SIZE);
             offset += PAGE_ID_SIZE;
@@ -89,10 +95,12 @@ public class IndexPage implements Page{
 
         // Read leaf flag and numKeys
         isLeaf = pageArray[0] == 1;
-        int numKeys = pageArray[1];
-        int offset = 2;
-        order =  isLeaf ? (index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_LEAF_NODE_ORDER : MOVIE_TITLE_LEAF_NODE_ORDER):
-                (index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_NON_LEAF_NODE_ORDER : MOVIE_TITLE_NON_LEAF_NODE_ORDER);
+        int numKeys = ((pageArray[1] & 0xFF) << 8) | (pageArray[2] & 0xFF);
+
+        int offset = 3;
+
+        order = isLeaf ? (index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_LEAF_NODE_ORDER : MOVIE_TITLE_LEAF_NODE_ORDER)
+                : (index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_NON_LEAF_NODE_ORDER : MOVIE_TITLE_NON_LEAF_NODE_ORDER);
 
         // Read nextLeaf and prevLeaf (only for leaf nodes)
         if (isLeaf) {
@@ -111,9 +119,10 @@ public class IndexPage implements Page{
             offset += index == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_SIZE : MOVIE_TITLE_SIZE;
         }
 
+        int numPageIds = isLeaf ? numKeys : numKeys + 1;
         // Read all page IDs
         pageIds.clear();
-        for (int i = 0; i < numKeys; i++) {
+        for (int i = 0; i < numPageIds; i++) {
             byte[] pageId = new byte[PAGE_ID_SIZE];
             System.arraycopy(pageArray, offset, pageId, 0, PAGE_ID_SIZE);
             pageIds.add(pageId);
