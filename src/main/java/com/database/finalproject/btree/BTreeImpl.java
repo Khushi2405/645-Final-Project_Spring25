@@ -254,4 +254,46 @@ public class BTreeImpl implements BTree<String, Rid> {
     private IndexPage loadRootPage(int rootPageId){
         return (IndexPage) bf.getPage(rootPageId, catalogIndex);
     }
+
+    public void bulkInsert(List<String> movieIds, List<Integer> dataPageIdList, List<Integer> slotIdList) {
+        if (movieIds.isEmpty()) {
+            return;
+        }
+    
+        IndexPage rightMostLeaf = loadRootPage(rootPageId);
+    
+        for (int i = 0; i < movieIds.size(); i++) {
+            String key = entry.getFirst();
+            Rid rid = entry.getSecond();
+    
+            insertIntoLeaf(rightMostLeaf, movieIds[i], dataPageIdList[i], slotIdList[i]);
+            if (rightMostLeaf.keys.size() >= rightMostLeaf.getOrder()) {
+                rightMostLeaf = splitLeafNode(leaf);
+            }
+
+            bf.markDirty(rightMostLeaf.getPid(), catalogIndex);
+            bf.unpinPage(rightMostLeaf.getPid(), catalogIndex);
+        }
+    }
+
+    private IndexPage splitLeafNodeRight(IndexPage leafPage) {
+        int mid = leafPage.keys.size() / 2;
+        IndexPage newLeafPage = (IndexPage) bf.createPage(catalogIndex);
+        newLeafPage.setIsLeaf(true);
+        newLeafPage.keys.addAll(leafPage.keys.subList(mid, leafPage.keys.size()));
+        newLeafPage.pageIds.addAll(leafPage.pageIds.subList(mid, leafPage.pageIds.size()));
+        newLeafPage.slotIds.addAll(leafPage.slotIds.subList(mid, leafPage.slotIds.size()));
+
+        leafPage.keys.subList(mid, leafPage.keys.size()).clear();
+        leafPage.pageIds.subList(mid, leafPage.pageIds.size()).clear();
+        leafPage.slotIds.subList(mid, leafPage.slotIds.size()).clear();
+
+        leafPage.nextLeaf = intToBytes(newLeafPage.getPid(), PAGE_ID_SIZE);
+        newLeafPage.prevLeaf = intToBytes(leafPage.getPid(), PAGE_ID_SIZE);
+
+        bf.unpinPage(newLeafPage.getPid(), catalogIndex);
+
+        insertIntoParent(leafPage, newLeafPage.keys.get(0), newLeafPage);
+        return newLeafPage;
+    }
 }
