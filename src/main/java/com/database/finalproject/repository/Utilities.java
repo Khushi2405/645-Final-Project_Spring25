@@ -47,6 +47,7 @@ public class Utilities {
                     pageId = currPage.getPid();
                 }
             }
+            System.out.println("Page loaded: " + pageId );
             bf.unpinPage(pageId, DATA_PAGE_INDEX);
             bf.force();
             System.out.println("Dataset loaded");
@@ -70,6 +71,7 @@ public class Utilities {
                 b.insert(new String(row.movieId()).trim(), new Rid(dataPageId, i));
             }
             bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
+            System.out.println(dataPageId + " inserted");
             dataPageId++;
         }
         bf.force();
