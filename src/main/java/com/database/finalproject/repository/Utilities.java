@@ -76,24 +76,6 @@ public class Utilities {
     }
 
     public static void createMovieIdIndexUsingBulkInsert(BufferManager bf, BTree<String, Rid> b) {
-        int dataPageId = 0;
-        while (true) {
-            Page currPage = bf.getPage(dataPageId, DATA_PAGE_INDEX);
-            if (currPage == null)
-                break;
-            for (int i = 0; i < 105; i++) {
-                Row row = ((DataPage) currPage).getRow(i);
-                if (row == null)
-                    break;
-                b.insert(Arrays.toString(row.movieId()), new Rid(dataPageId, i));
-            }
-            bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
-            dataPageId++;
-        }
-        bf.force();
-    }
-
-    public static void createMovieIdIndexUsingBulkInsert(BufferManager bf, BTree<String, Rid> b) {
         List<String> movieIds = new ArrayList<String>();
         List<Integer> dataPageIdList = new ArrayList<>();
         List<Integer> slotIdList = new ArrayList<>();
