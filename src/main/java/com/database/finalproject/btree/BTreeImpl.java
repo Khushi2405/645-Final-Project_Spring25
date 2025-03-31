@@ -14,7 +14,6 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     BufferManager bf;
     int rootPageId;
-//    IndexPage rootPage;
     int catalogIndex;
 
     public BTreeImpl(BufferManager bf, int catalogIndex) {
@@ -46,14 +45,10 @@ public class BTreeImpl implements BTree<String, Rid> {
         IndexPage nodePage = loadRootPage(rootPageId);
         while (!nodePage.getIsLeaf()) {
             int i = 0;
-            // TODO greater than 0 or less than ?
-//            System.out.println("Page id : " + nodePage.getPid());
             while (i < nodePage.keys.size()
-                    && key.compareTo(new String(removeTrailingBytes(nodePage.keys.get(i))).trim()) > 0) {
-//                System.out.print(new String(removeTrailingBytes(nodePage.keys.get(i))).trim() + " ");
+                    && key.compareTo(new String(removeTrailingBytes(nodePage.keys.get(i))).trim()) >= 0) {
                 i++;
             }
-//            System.out.println();
             bf.unpinPage(nodePage.getPid(), catalogIndex);
             nodePage = (IndexPage) bf.getPage(bytesToInt(nodePage.pageIds.get(i)), catalogIndex);
         }
@@ -63,7 +58,7 @@ public class BTreeImpl implements BTree<String, Rid> {
     private void insertIntoLeaf(IndexPage leafPage, String key, int pageId, int slotId) {
         int i = 0;
         while (i < leafPage.keys.size()
-                && key.compareTo(new String(removeTrailingBytes(leafPage.keys.get(i))).trim()) > 0) {
+                && key.compareTo(new String(removeTrailingBytes(leafPage.keys.get(i))).trim()) >= 0) {
             i++;
         }
         leafPage.keys.add(i, truncateOrPadByteArray(key.getBytes(), catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX ? MOVIE_ID_SIZE : MOVIE_TITLE_SIZE));
@@ -119,6 +114,9 @@ public class BTreeImpl implements BTree<String, Rid> {
         IndexPage rootPage = loadRootPage(rootPageId);
         IndexPage parent = findParent(rootPage, leftPage);
 
+        if(rootPageId != parent.getPid())
+            bf.unpinPage(rootPageId, catalogIndex);
+
         int insertIdx = 0;
         while (insertIdx < parent.pageIds.size() && bytesToInt(parent.pageIds.get(insertIdx)) != leftPage.getPid()) {
             insertIdx++;
@@ -131,20 +129,37 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
         bf.markDirty(parent.getPid(), catalogIndex);
         bf.unpinPage(parent.getPid(), catalogIndex);
-        if(rootPageId != parent.getPid())
-            bf.unpinPage(rootPageId, catalogIndex);
+
     }
 
     private IndexPage findParent(IndexPage node, IndexPage child) {
-        if (node.getIsLeaf()) return null;
-        for (byte[] n : node.pageIds) {
-            int subChildPageId = bytesToInt(n);
-            if (subChildPageId == child.getPid()) return node;
-            IndexPage subChild = (IndexPage) bf.getPage(subChildPageId,catalogIndex);
-            IndexPage parent = findParent(subChild, child);
-            if (parent != null) return parent;
-            bf.unpinPage(subChildPageId, catalogIndex);
+        if (node == null || node.getIsLeaf()) {
+            return null;
         }
+
+        // Check if this node is the direct parent
+        for (int i = 0; i < node.pageIds.size(); i++) {
+            int pageId = bytesToInt(node.pageIds.get(i));
+            if (pageId == child.getPid()) {
+                return node;
+            }
+        }
+
+        // Recursively check all children
+        IndexPage result = null;
+        for (int i = 0; i < node.pageIds.size(); i++) {
+            int pageId = bytesToInt(node.pageIds.get(i));
+            IndexPage subChild = (IndexPage) bf.getPage(pageId, catalogIndex);
+
+            if (subChild != null) {
+                result = findParent(subChild, child);
+                if (result != null) {
+                    return result;
+                }
+                bf.unpinPage(subChild.getPid(), catalogIndex);
+            }
+        }
+
         return null;
     }
 
@@ -168,8 +183,6 @@ public class BTreeImpl implements BTree<String, Rid> {
             newRoot.pageIds.add(intToBytes(newInternal.getPid(), PAGE_ID_SIZE));
             rootPageId = newRoot.getPid();
             bf.setRootPageId(rootPageId, catalogIndex);
-            // TODO update root in catalog
-
             bf.unpinPage(newRoot.getPid(), catalogIndex);
         } else {
             insertIntoParent(node, promotedKey, newInternal);
@@ -177,17 +190,6 @@ public class BTreeImpl implements BTree<String, Rid> {
 
         // mark dirty and unpin
         bf.unpinPage(newInternal.getPid(), catalogIndex);
-    }
-
-    private static byte[] removeTrailingBytes(byte[] input) {
-        int endIndex = input.length;
-        for (int i = input.length - 1; i >= 0; i--) {
-            if (input[i] != PADDING_BYTE) { // Only remove custom padding byte
-                endIndex = i + 1;
-                break;
-            }
-        }
-        return Arrays.copyOf(input, endIndex);
     }
 
     @Override
@@ -244,34 +246,6 @@ public class BTreeImpl implements BTree<String, Rid> {
         return result.iterator();
     }
 
-    public static byte[] intToBytes(int value, int capacity) {
-        ByteBuffer buffer = ByteBuffer.allocate(4); // Always allocate 4 bytes
-        buffer.putInt(value);
-        return Arrays.copyOfRange(buffer.array(), 4 - capacity, 4); // Extract the required bytes
-    }
-
-    // Convert a 4-byte array back to an integer
-    public static int bytesToInt(byte[] bytes) {
-        // return ByteBuffer.wrap(bytes).getInt();
-        ByteBuffer buffer = ByteBuffer.allocate(4); // Ensure 4 bytes
-        buffer.put(new byte[4 - bytes.length]); // Pad with leading zeros if needed
-        buffer.put(bytes); // Copy the actual bytes
-        buffer.rewind(); // Reset position before reading
-        return buffer.getInt();
-    }
-
-
-    private static byte[] truncateOrPadByteArray(byte[] value, int maxLength) {
-        if (value.length > maxLength) {
-            return Arrays.copyOf(value, maxLength); // Truncate safely at byte level
-        } else {
-            byte[] padded = new byte[maxLength];
-            System.arraycopy(value, 0, padded, 0, value.length); // Copy original bytes
-            Arrays.fill(padded, value.length, maxLength, PADDING_BYTE); // Fill remaining space with 0x7F
-            return padded;
-        }
-    }
-
     private IndexPage loadRootPage(int rootPageId){
         return (IndexPage) bf.getPage(rootPageId, catalogIndex);
     }
@@ -282,9 +256,14 @@ public class BTreeImpl implements BTree<String, Rid> {
             bf.unpinPage(nodePage.getPid(), catalogIndex);
             nodePage = (IndexPage) bf.getPage(bytesToInt(nodePage.pageIds.get(0)), catalogIndex);
         }
+        String prev = "";
         while (nodePage != null) {
             for (byte[] key : nodePage.keys) {
-                System.out.println(new String(removeTrailingBytes(key)).trim() + " ");
+                String curr = new String(removeTrailingBytes(key)).trim();
+                if(prev.compareTo(curr) > 0){
+                    System.out.println(prev + " " + curr);
+                }
+                prev = curr;
             }
 
             // Move to the next leaf node
@@ -298,5 +277,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         System.out.println();
 
     }
+
+
 
 }

@@ -297,6 +297,12 @@ public class BufferManagerImpl extends BufferManager {
 
     private boolean removeLRUNode() {
         DLLNode unpinnedNode = tailBufferPool;
+        if(unpinnedNode == headBufferPool){
+            headBufferPool = null;
+            tailBufferPool = null;
+            pageHash.clear();
+            return true;
+        }
         while (unpinnedNode != null && unpinnedNode.pinCount != 0) {
             unpinnedNode = unpinnedNode.prev;
         }
