@@ -57,6 +57,31 @@ public class BTreeImpl implements BTree<String, Rid> {
         return nodePage;
     }
 
+    public String[] getZerothAndNthKeys(int n) {
+        String[] firstAndNth = new String[2];
+        IndexPage leaf = this.getFirstLeaf();
+        firstAndNth[0] = leaf.keys.get(0);
+        int i = 0;
+        while (true) {
+            if (i + leaf.keys.size() > n) {
+                firstAndNth[1] = leaf.keys.get(n = i);
+            }
+            else {
+                i += leaf.keys.size();
+                leaf = leaf.nextLeaf;
+            }
+        }
+    }
+
+    private IndexPage getFirstLeaf() {
+        IndexPage nodePage = loadRootPage(rootPageId);
+        while (!nodePage.getIsLeaf()) {
+            bf.unpinPage(nodePage.getPid(), catalogIndex);
+            nodePage = (IndexPage) bf.getPage(bytesToInt(nodePage.pageIds.get(0)), catalogIndex);
+        }
+        return nodePage;
+    }
+
     private void insertIntoLeaf(IndexPage leafPage, String key, int pageId, int slotId) {
         int i = 0;
         while (i < leafPage.keys.size() &&  key.compareTo(Arrays.toString(removeTrailingBytes(leafPage.keys.get(i)))) < 0) {
