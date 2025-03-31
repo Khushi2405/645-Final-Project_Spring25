@@ -1,14 +1,15 @@
 package com.database.finalproject.buffermanager;
 
+import static com.database.finalproject.constants.PageConstants.DATA_PAGE_INDEX;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.nio.charset.StandardCharsets;
 
+import com.database.finalproject.model.DataPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.database.finalproject.model.Page;
 import com.database.finalproject.model.Row;
 
 import org.mockito.ArgumentCaptor;
@@ -30,7 +31,7 @@ class BufferManagerImplTest {
     @Test
     void testCreatePage() {
         // create a new page
-        Page page = bufferManager.createPage();
+        DataPage page = (DataPage) bufferManager.createPage();
         assertNotNull(page, "Page should be created successfully");
         assertTrue(page.getPid() >= 0, "Page ID should be valid");
     }
@@ -40,9 +41,9 @@ class BufferManagerImplTest {
         // buffer full for createPage
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
         for (int i = 1; i <= 5; i++) {
-            Page createdPage = bufferManagerSpy.createPage();
+            DataPage createdPage = (DataPage) bufferManagerSpy.createPage();
         }
-        Page createdPageExtra = bufferManagerSpy.createPage();
+        DataPage createdPageExtra = (DataPage) bufferManagerSpy.createPage();
 
         assertNull(createdPageExtra, "Page should not be create, response should be NULL");
     }
@@ -51,10 +52,10 @@ class BufferManagerImplTest {
     @Test
     void testFetchPage() {
         // page already in buffer pool
-        Page createdPage = bufferManager.createPage();
+        DataPage createdPage = (DataPage) bufferManager.createPage();
         int pageId = createdPage.getPid();
 
-        Page fetchedPage = bufferManager.getPage(pageId);
+        DataPage fetchedPage = (DataPage) bufferManager.getPage(pageId);
         assertNotNull(fetchedPage, "Fetched page should not be null");
         assertEquals(pageId, fetchedPage.getPid(), "Fetched page ID should match");
     }
@@ -63,19 +64,19 @@ class BufferManagerImplTest {
     void testFetchPageNotInBuffer() {
         // page not in buffer pool
         for (int i = 1; i <= 4; i++) {
-            Page createdPage = bufferManager.createPage();
+            DataPage createdPage = (DataPage) bufferManager.createPage();
         }
-        Page page5 = bufferManager.createPage();
+        DataPage page5 = (DataPage) bufferManager.createPage();
         int pageId5 = page5.getPid();
         bufferManager.unpinPage(pageId5);
 
         // evict page 5
-        Page page6 = bufferManager.createPage();
+        DataPage page6 = (DataPage) bufferManager.createPage();
         int pageId6 = page6.getPid();
         bufferManager.unpinPage(pageId6);
 
         // get page 5, evict 6
-        Page fetchedPage = bufferManager.getPage(pageId5);
+        DataPage fetchedPage = (DataPage) bufferManager.getPage(pageId5);
         assertNotNull(fetchedPage, "Fetched page should not be null");
         assertEquals(pageId5, fetchedPage.getPid(), "Fetched page ID should match");
     }
@@ -85,15 +86,15 @@ class BufferManagerImplTest {
         // buffer full on getPage
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
         for (int i = 1; i <= 4; i++) {
-            Page createdPage = bufferManagerSpy.createPage();
+            DataPage createdPage = (DataPage) bufferManagerSpy.createPage();
         }
-        Page page5 = bufferManagerSpy.createPage();
+        DataPage page5 = (DataPage) bufferManagerSpy.createPage();
         int pageId5 = page5.getPid();
         bufferManagerSpy.unpinPage(pageId5);
 
-        Page newPage = bufferManagerSpy.createPage();
+        DataPage newPage = (DataPage) bufferManagerSpy.createPage();
 
-        Page getPage5 = bufferManagerSpy.getPage(pageId5);
+        DataPage getPage5 = (DataPage) bufferManagerSpy.getPage(pageId5);
 
         assertNull(getPage5, "Buffer full: Cannot get page, response should be NULL");
     }
@@ -103,14 +104,14 @@ class BufferManagerImplTest {
         // empty page writes
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
         for (int i = 1; i <= 4; i++) {
-            Page createdPage = bufferManagerSpy.createPage();
+            DataPage createdPage = (DataPage) bufferManagerSpy.createPage();
         }
-        Page page5 = bufferManagerSpy.createPage();
+        DataPage page5 = (DataPage) bufferManagerSpy.createPage();
         int pageId5 = page5.getPid();
         bufferManagerSpy.unpinPage(pageId5);
 
-        Page newPage = bufferManagerSpy.createPage();
-        verify(bufferManagerSpy).writeToBinaryFile(page5);
+        DataPage newPage = (DataPage) bufferManagerSpy.createPage();
+        verify(bufferManagerSpy).writeToBinaryFile(page5, DATA_PAGE_INDEX);
     }
 
     @Test
@@ -118,7 +119,7 @@ class BufferManagerImplTest {
         // page to be marked dirty on createPage
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
 
-        Page newPage = bufferManagerSpy.createPage();
+        DataPage newPage = (DataPage) bufferManagerSpy.createPage();
         int pageId = newPage.getPid();
 
         // Verify if markDirty(pageId) was called inside createPage()
@@ -128,7 +129,7 @@ class BufferManagerImplTest {
     // rows
     @Test
     void testInsertRow() {
-        Page page = bufferManager.createPage();
+        DataPage page = (DataPage) bufferManager.createPage();
         Row row = new Row("tt1111111".getBytes(StandardCharsets.UTF_8),
                 "Test Movie Insert".getBytes(StandardCharsets.UTF_8));
 
@@ -143,7 +144,7 @@ class BufferManagerImplTest {
 
     @Test
     void testPageFull() {
-        Page page = bufferManager.createPage();
+        DataPage page = (DataPage) bufferManager.createPage();
         for (int i = 1; i <= 105; i++) {
             Row row = new Row("tt1111111".getBytes(StandardCharsets.UTF_8),
                     "Test Movie Insert".getBytes(StandardCharsets.UTF_8));
@@ -164,20 +165,20 @@ class BufferManagerImplTest {
         BufferManagerImpl bufferManagerSpy = spy(new BufferManagerImpl(5));
         // make 4 pages and pin
         for (int i = 1; i <= 4; i++) {
-            Page createdPage = bufferManagerSpy.createPage();
+            DataPage createdPage = (DataPage) bufferManagerSpy.createPage();
         }
         // create 5th page and unpin
-        Page page5 = bufferManagerSpy.createPage();
+        DataPage page5 = (DataPage) bufferManagerSpy.createPage();
         int pageId5 = page5.getPid();
         bufferManagerSpy.unpinPage(pageId5);
 
         // create 6th page, page 5 will be evicted and unpin page 6
-        Page page6 = bufferManagerSpy.createPage();
+        DataPage page6 = (DataPage) bufferManagerSpy.createPage();
         int pageId6 = page6.getPid();
         bufferManagerSpy.unpinPage(pageId6);
 
         // get page5 [page6 gets evicted], insert rows, mark dirty, unpin
-        Page getPage5 = bufferManagerSpy.getPage(pageId5);
+        DataPage getPage5 = (DataPage) bufferManagerSpy.getPage(pageId5);
         Row row = new Row("tt1111111".getBytes(StandardCharsets.UTF_8),
                 "Test Movie Insert".getBytes(StandardCharsets.UTF_8));
         int rowId = getPage5.insertRow(row) - 1;
@@ -185,8 +186,8 @@ class BufferManagerImplTest {
         bufferManagerSpy.unpinPage(pageId5);
 
         // get page6 [5 gets evicted, should call writeToBinaryFile]
-        Page getPage6 = bufferManagerSpy.getPage(pageId6);
-        verify(bufferManagerSpy).writeToBinaryFile(getPage5);
+        DataPage getPage6 = (DataPage) bufferManagerSpy.getPage(pageId6);
+        verify(bufferManagerSpy).writeToBinaryFile(getPage5, DATA_PAGE_INDEX);
     }
 
     // markDirty exception
@@ -203,7 +204,7 @@ class BufferManagerImplTest {
 
     @Test
     void testMarkDirtyDoesNotThrowError() {
-        Page newPage = bufferManager.createPage();
+        DataPage newPage = (DataPage) bufferManager.createPage();
         int pageId = newPage.getPid();
         bufferManager.markDirty(pageId);
 
@@ -224,7 +225,7 @@ class BufferManagerImplTest {
 
     @Test
     void testUnpinPageDoesNotThrowError() {
-        Page newPage = bufferManager.createPage();
+        DataPage newPage = (DataPage) bufferManager.createPage();
         int pageId = newPage.getPid();
 
         bufferManager.unpinPage(pageId);

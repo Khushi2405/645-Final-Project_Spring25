@@ -1,7 +1,6 @@
 package com.database.finalproject.buffermanager;
 
 import com.database.finalproject.model.Page;
-import com.database.finalproject.model.PageImpl;
 
 public abstract class BufferManager {
     final int bufferSize;
@@ -10,13 +9,20 @@ public abstract class BufferManager {
         this.bufferSize = bufferSize;
     }
 
-    public abstract Page getPage(int pageId);
+    public abstract Page getPage(int pageId, int ...index);
 
-    public abstract Page createPage();
+    public abstract Page createPage(int ...index);
 
-    public abstract void markDirty(int pageId);
+    public abstract void markDirty(int pageId, int ...index);
 
-    public abstract void unpinPage(int pageId);
+    public abstract void unpinPage(int pageId, int ...index);
 
-    public abstract void writeToBinaryFile(Page page);
+    public abstract void writeToBinaryFile(Page page, int ...index);
+
+    public abstract void force();
+
+    public abstract String getRootPageId(int ...index);
+
+    public abstract void setRootPageId(int rootPageId, int ...index);
+    public abstract String getFilePath(int index);
 }
