@@ -60,7 +60,7 @@ public class Utilities {
 
     public static void createMovieIdIndex(BufferManager bf, BTree<String, Rid> b) {
         int dataPageId = 0;
-        while (dataPageId < 10000) {
+        while (true) {
             Page currPage = bf.getPage(dataPageId, DATA_PAGE_INDEX);
             if (currPage == null)
                 break;
@@ -79,7 +79,7 @@ public class Utilities {
 
     public static void createMovieTitleIndex(BufferManager bf, BTree<String, Rid> b) {
         int dataPageId = 0;
-        while (dataPageId < 10000) {
+        while (true) {
             Page currPage = bf.getPage(dataPageId, DATA_PAGE_INDEX);
             if (currPage == null)
                 break;
@@ -87,7 +87,7 @@ public class Utilities {
                 Row row = ((DataPage) currPage).getRow(i);
                 if (row == null)
                     break;
-                b.insert(new String(row.movieTitle()).trim(), new Rid(dataPageId, i));
+                b.insert(new String(removeTrailingBytes(row.movieTitle())).trim(), new Rid(dataPageId, i));
             }
             bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
             if(dataPageId % 1000 == 0) System.out.println(dataPageId + " inserted");
