@@ -284,7 +284,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
         while (nodePage != null) {
             for (byte[] key : nodePage.keys) {
-                System.out.print(new String(removeTrailingBytes(key)).trim() + " ");
+                System.out.println(new String(removeTrailingBytes(key)).trim() + " ");
             }
 
             // Move to the next leaf node

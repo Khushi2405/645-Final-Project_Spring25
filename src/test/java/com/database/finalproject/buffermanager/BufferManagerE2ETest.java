@@ -26,7 +26,7 @@ class BufferManagerE2ETest {
     @BeforeAll
     void setup() {
         bufferManager = new BufferManagerImpl(5);
-        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
+//        Utilities.loadDataset(bufferManager, "src/main/resources/static/title.basics.tsv");
     }
 
     @BeforeEach
