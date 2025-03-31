@@ -25,4 +25,7 @@ public class PageConstants {
     public static final String DATABASE_CATALOGUE_KEY_TOTAL_PAGES = "totalPages";
     public static final String DATABASE_CATALOGUE_KEY_ROOT_PAGE = "rootPage";
 
+    public static final int ATTR_TYPE_ID = 0;
+    public static final int ATTR_TYPE_TITLE = 1;
+
 }

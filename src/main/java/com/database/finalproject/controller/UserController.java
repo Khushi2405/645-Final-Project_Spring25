@@ -70,6 +70,30 @@ public class UserController {
         return fetchRows(res);
     }
 
+    public List<Row> rangeSearchSequentialScan(String startKey, String endKey, int attrType) {
+        List<Row> movies = new ArrayList<>();
+        int dataPageId = 0;
+        while (true) {
+            Page currPage = bf.getPage(dataPageId, DATA_PAGE_INDEX);
+            if (currPage == null)
+                break;
+            for (int i = 0; i < 105; i++) {
+                Row row = ((DataPage) currPage).getRow(i);
+                if (row == null)
+                    break;
+
+                byte[] key = attrType == ATTR_TYPE_ID ? row.movieId() : row.movieTitle();
+                if (new String(removeTrailingBytes(key)).compareTo(startKey) >= 0
+                        && new String(removeTrailingBytes(key)).compareTo(endKey) <= 0) {
+                    movies.add(row);
+                }
+            }
+            bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
+            dataPageId++;
+        }
+        return movies;
+    }
+
     private List<Row> fetchRows(Iterator<Rid> res) {
         List<Row> ans = new ArrayList<>();
         while (res.hasNext()) {
@@ -81,10 +105,19 @@ public class UserController {
             ans.add(row);
             bf.unpinPage(pageId);
 
-
         }
         return ans;
     }
 
+    private static byte[] removeTrailingBytes(byte[] input) {
+        int endIndex = input.length;
+        for (int i = input.length - 1; i >= 0; i--) {
+            if (input[i] != PADDING_BYTE) { // Only remove custom padding byte
+                endIndex = i + 1;
+                break;
+            }
+        }
+        return Arrays.copyOf(input, endIndex);
+    }
 
 }
