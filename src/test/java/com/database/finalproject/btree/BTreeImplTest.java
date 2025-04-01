@@ -120,5 +120,34 @@ class BTreeImplTest {
         assertFalse(resultIterator.hasNext());
     }
 
+    @Test
+    void testSplitOnInsert() {
+        for (int i = 1; i <= 10; i++) {
+            bTree.insert("tt000000" + i, new Rid(i, 0));
+        }
+    
+        verify(bufferManager, atLeastOnce()).createPage(MOVIE_ID_INDEX_PAGE_INDEX);
+        verify(bufferManager, atLeastOnce()).markDirty(anyInt(), eq(MOVIE_ID_INDEX_PAGE_INDEX));
+    }
+    @Test
+    public void testRangeSearch() {
+        bTree.insert("tt0000001", new Rid(1, 10));
+        bTree.insert("tt0000002", new Rid(2, 20));
+        bTree.insert("tt0000003", new Rid(3, 30));
+        bTree.insert("tt0000004", new Rid(4, 40));
+        bTree.insert("tt0000005", new Rid(5, 50));
+
+        Iterator<Rid> result = bTree.rangeSearch("tt0000002", "tt0000004");
+        assertTrue(result.hasNext());
+
+        assertEquals((new Rid(2, 20)).getPageId(), result.next().getPageId());
+        assertEquals((new Rid(3, 30)).getPageId(), result.next().getPageId());
+        assertEquals((new Rid(4, 40)).getPageId(), result.next().getPageId());
+
+        // assertEquals(new Rid(2, 20)), result.next());
+        // assertEquals(new Rid(3, 30), result.next());
+        // assertEquals(new Rid(4, 40), result.next());
+        assertFalse(result.hasNext());
+    }
 }
 
