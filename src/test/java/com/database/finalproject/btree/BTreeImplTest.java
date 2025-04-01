@@ -112,5 +112,13 @@ class BTreeImplTest {
         // Check that there are no more results (since only one result is expected)
         assertFalse(resultIterator.hasNext());
     }
+
+    @Test
+    void testSearchNonExistingKey() {
+        Iterator<Rid> resultIterator = bTree.search("tt9999999");
+        assertNotNull(resultIterator);
+        assertFalse(resultIterator.hasNext());
+    }
+
 }
 
