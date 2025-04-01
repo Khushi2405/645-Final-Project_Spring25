@@ -5,6 +5,7 @@ import com.database.finalproject.model.IndexPage;
 import com.database.finalproject.model.Rid;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import static com.database.finalproject.constants.PageConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -86,5 +87,30 @@ class BTreeImplTest {
         verify(bufferManager, atLeast(3)).unpinPage(anyInt(), eq(MOVIE_ID_INDEX_PAGE_INDEX));
     }
 
+    @Test
+    void testSearchExistingKey() {
+        Rid rid = new Rid(1, 0);
+        bTree.insert("tt0000001", rid);
+        
+        // Search for the key "tt0000001"
+        Iterator<Rid> resultIterator = bTree.search("tt0000001");
+        
+        // Ensure that the iterator is not null
+        assertNotNull(resultIterator);
+        
+        // Check if the iterator has results
+        assertTrue(resultIterator.hasNext());
+        
+        // Retrieve the first result
+        Rid firstResult = resultIterator.next();
+        
+        // Perform field-by-field comparison (instead of using equals)
+        assertNotNull(firstResult);
+        assertEquals(rid.getPageId(), firstResult.getPageId()); // Compare pageId
+        assertEquals(rid.getSlotId(), firstResult.getSlotId()); // Compare slotId
+        
+        // Check that there are no more results (since only one result is expected)
+        assertFalse(resultIterator.hasNext());
+    }
 }
 
