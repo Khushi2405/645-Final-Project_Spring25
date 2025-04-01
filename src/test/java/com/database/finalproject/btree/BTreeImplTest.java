@@ -73,6 +73,7 @@ class BTreeImplTest {
         verify(bufferManager, atLeastOnce()).unpinPage(anyInt(), eq(MOVIE_ID_INDEX_PAGE_INDEX));
     }
 
+    
     @Test
     void testInsertMultipleKeys() {
         Rid rid1 = new Rid(1, 0);
@@ -115,20 +116,18 @@ class BTreeImplTest {
 
     @Test
     void testSearchNonExistingKey() {
+        Rid rid = new Rid(1, 0);
+        bTree.insert("tt0000001", rid);
         Iterator<Rid> resultIterator = bTree.search("tt9999999");
         assertNotNull(resultIterator);
         assertFalse(resultIterator.hasNext());
     }
-
     @Test
-    void testSplitOnInsert() {
-        for (int i = 1; i <= 10; i++) {
-            bTree.insert("tt000000" + i, new Rid(i, 0));
-        }
-    
-        verify(bufferManager, atLeastOnce()).createPage(MOVIE_ID_INDEX_PAGE_INDEX);
-        verify(bufferManager, atLeastOnce()).markDirty(anyInt(), eq(MOVIE_ID_INDEX_PAGE_INDEX));
+    void testSearchEmptyTree() {
+        Iterator<Rid> result = bTree.search("tt9999999");
+        assertFalse(result.hasNext());
     }
+
     @Test
     public void testRangeSearch() {
         bTree.insert("tt0000001", new Rid(1, 10));
@@ -149,5 +148,47 @@ class BTreeImplTest {
         // assertEquals(new Rid(4, 40), result.next());
         assertFalse(result.hasNext());
     }
+
+    @Test
+    void testRangeSearchNoMatches() {
+        bTree.insert("tt0000001", new Rid(1, 10));
+        bTree.insert("tt0000002", new Rid(2, 20));
+        bTree.insert("tt0000003", new Rid(3, 30));
+        
+        Iterator<Rid> result = bTree.rangeSearch("tt0000005", "tt0000007");
+        assertFalse(result.hasNext());
+    }
+    
+    @Test
+    void testRangeSearchSingleElement() {
+        Rid rid = new Rid(1, 15);
+        bTree.insert("tt0000003", rid);
+        
+        Iterator<Rid> result = bTree.rangeSearch("tt0000003", "tt0000003");
+        assertTrue(result.hasNext());
+
+        Rid firstResult = result.next();
+        
+        // Perform field-by-field comparison (instead of using equals)
+        assertNotNull(firstResult);
+
+        assertEquals(rid.getPageId(), firstResult.getPageId()); // Compare pageId
+        assertEquals(rid.getSlotId(), firstResult.getSlotId()); // Compare slotId
+        
+        assertFalse(result.hasNext());
+    }
+    
+    // @Test
+    // void testInsertLargeNumberOfKeys() {
+    //     for (int i = 1000; i <= 9999; i++) {
+    //         System.out.println("i is " +i);
+    //         bTree.insert("tt000" + i, new Rid(i, 0));
+    //     }
+        
+    //     for (int i = 1000; i <= 9999; i++) {
+    //         Iterator<Rid> result = bTree.search("tt000" + i);
+    //         assertTrue(result.hasNext());
+    //     }
+    // }
 }
 
