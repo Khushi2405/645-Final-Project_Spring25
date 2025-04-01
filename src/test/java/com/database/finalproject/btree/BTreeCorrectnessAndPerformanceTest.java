@@ -36,52 +36,74 @@ import com.database.finalproject.repository.Utilities;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.boot.test.context.TestComponent;
 
-public class BTreeCorrectnessTest {
+public class BTreeCorrectnessAndPerformanceTest {
+    private BufferManager bf;
+    private BTreeImpl movieTitleBtree;
+    private BTreeImpl movieIdBtree;
+
+    @BeforeAll
+    void setup() {
+        int bufferSize = 5;
+        bf = new BufferManagerImpl(bufferSize);
+
+        //Movie title
+        movieTitleBtree = new BTreeImpl(bf, MOVIE_TITLE_INDEX_INDEX);
+        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
+        Utilities.createMovieTitleIndex(bf, movieTitleBtree);
+
+        //Movie id
+        movieIdBtree = new BTreeImpl(bf, MOVIE_ID_INDEX_PAGE_INDEX);
+        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
+        Utilities.createMovieIdIndex(bf, movieIdBtree);
+
+        //Movie id Bulkinsert
+        movieIdBtree = new BTreeImpl(bf, MOVIE_ID_INDEX_PAGE_INDEX);
+        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
+        Utilities.createMovieIdIndexUsingBulkInsert(bf, movieIdBtree);
+    }
+
     @Test
     void testC1() {
-        assertDoesNotThrow(() -> {
-            BufferManager bf = new BufferManagerImpl(bufferSize);
-            BTreeImpl movieTitleBtree = new BTreeImpl(bf, MOVIE_TITLE_INDEX_INDEX);
-            Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
-            Utilities.createMovieTitleIndex(bf, movieTitleBtree);
+        /*
+         * Uncomment creating movie title index file from setup
+         */
+        assertDoesNotThrow(() -> {  
         }, "Creating movie title index files failed: got an error");
     }
 
     @Test
     void testC2() {
+        /*
+         * Uncomment creating movie id index file from setup
+         */
         assertDoesNotThrow(() -> {
-            BufferManager bf = new BufferManagerImpl(bufferSize);
-            BTreeImpl movieIdBtree = new BTreeImpl(bf, MOVIE_ID_INDEX_PAGE_INDEX);
-            Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
-            Utilities.createMovieIdIndex(bf, movieIdBtree);
         }, "Creating movieid index files failed: got an error");
     }
 
     @Test
     void testC2Bonus() {
+        /*
+         * Uncomment creating movie id index file using bulk insert from setup
+         */
         assertDoesNotThrow(() -> {
-            BufferManager bf = new BufferManagerImpl(bufferSize);
-            BTreeImpl movieIdBtree = new BTreeImpl(bf, MOVIE_ID_INDEX_PAGE_INDEX);
-            Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
-            Utilities.createMovieIdIndexUsingBulkInsert(bf, movieIdBtree);
         }, "Creating movieid index files using bulk insert failed: got an error");
     }
 
     @Test
     void testC3MovieTitle() {
-        String movieTitle = "The Derby 1895"
-        BufferManager bf = new BufferManagerImpl(bufferSize);
-        BTreeImpl movieTitleBtree = new BTreeImpl(bf, MOVIE_TITLE_INDEX_INDEX);
-        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
-        Utilities.createMovieTitleIndex(bf, movieTitleBtree);
+        /*
+         * Uncomment creating movie title index file from setup
+         */
+        String movieTitle = "The Derby 1895";
         List<Rid> rids = movieTitleBtree.search(movieTitle);
         boolean found = false;
         for (Rid rid : rids) {
             int pageId = rid.getPageId();
             int slotId = rid.getSlotId();
-            Page page = bf.getPage(pageId, MOVIE_TITLE_INDEX_INDEX);
+            DataPage page = (DataPage) bf.getPage(pageId, MOVIE_TITLE_INDEX_INDEX);
             Row row = page.getRow(slotId);
-            if (row.movieTitle() == movieTitle) {
+            String rowTitle = new String(row.movieTitle(), StandardCharsets.UTF_8);
+            if (rowTitle.equals(movieTitle)) {
                 found = true;
                 break;
             }
@@ -91,19 +113,16 @@ public class BTreeCorrectnessTest {
 
     @Test
     void testC3MovieId() {
-        String movieId = "tt0000020"
-        BufferManager bf = new BufferManagerImpl(bufferSize);
-        BTreeImpl movieIdBtree = new BTreeImpl(bf, MOVIE_ID_INDEX_PAGE_INDEX);
-        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
-        Utilities.createMovieIdIndexUsingBulkInsert(bf, movieIdBtree);
+        String movieId = "tt0000020";
         List<Rid> rids = movieTitleBtree.search(movieId);
         boolean found = false;
         for (Rid rid : rids) {
             int pageId = rid.getPageId();
             int slotId = rid.getSlotId();
-            Page page = bf.getPage(pageId, 2);
+            DataPage page = (DataPage) bf.getPage(pageId, 2);
             Row row = page.getRow(slotId);
-            if (row.movieId() == movieId) {
+            String rowId = new String(row.movieId(), StandardCharsets.UTF_8);
+            if (rowId.equals(movieId)) {
                 found = true;
                 break;
             }
@@ -113,30 +132,26 @@ public class BTreeCorrectnessTest {
     
     @Test
     void testC4MovieTitle() {
-        String movieTitle1 = "Barnet Horse Fair"
-        String movieTitle2 = "Blacksmith Scene"
-        String movieTitleExtra = "Bataille de neige"
-        BufferManager bf = new BufferManagerImpl(bufferSize);
-        BTreeImpl<String,Rid> movieTitleBtree = new BTreeImpl<String,Rid>(bf, MOVIE_TITLE_INDEX_INDEX);
-        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
-        Utilities.createMovieTitleIndex(bf, movieTitleBtree);
+        String movieTitle1 = "Barnet Horse Fair";
+        String movieTitle2 = "Blacksmith Scene";
+        String movieTitleExtra = "Bataille de neige";
         List<Rid> rids = movieTitleBtree.rangeSearch(movieTitle1, movieTitle2);
         boolean found1 = false;
         boolean found2 = false;
         boolean foundExtra = false;
         for (Rid rid : rids) {
             int pageId = rid.getPageId();
-            int slotId = rid.getSlotId();
+            int slotId = rid.getSlotId(); 
             DataPage page = (DataPage) bf.getPage(pageId, MOVIE_TITLE_INDEX_INDEX);
             Row row = page.getRow(slotId);
-            if (row.movieTitle() == movieTitle1) {
+            String rowTitle = new String(row.movieTitle(), StandardCharsets.UTF_8);
+            if (rowTitle.equals(movieTitle1)) {
                 found1 = true;
             }
-            else if 
-            (row.movieTitle() == movieTitle2) {
+            else if (rowTitle.equals(movieTitle2)) {
                 found2 = true;
             }
-            else if (row.movieTitle() == movieTitleExtra) {
+            else if (rowTitle.equals(movieTitleExtra)) {
                 foundExtra = true;
             }
             if (found1 && found2 && foundExtra) {
@@ -148,13 +163,9 @@ public class BTreeCorrectnessTest {
 
     @Test
     void testC4MovieId() {
-        String movieId1 = "tt0000003"
-        String movieId2 = "tt0000011"
-        String movieIdExtra = "tt0000007"
-        BufferManager bf = new BufferManagerImpl(bufferSize);
-        BTreeImpl movieIdBtree = new BTreeImpl(bf, MOVIE_ID_INDEX_PAGE_INDEX);
-        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
-        Utilities.createMovieIdIndexUsingBulkInsert(bf, movieIdBtree);
+        String movieId1 = "tt0000003";
+        String movieId2 = "tt0000011";
+        String movieIdExtra = "tt0000007";
         List<Rid> rids = movieIdBtree.rangeSearch(movieId1, movieId2);
         boolean found1 = false;
         boolean found2 = false;
@@ -164,14 +175,14 @@ public class BTreeCorrectnessTest {
             int slotId = rid.getSlotId();
             DataPage page = (DataPage) bf.getPage(pageId, MOVIE_ID_INDEX_PAGE_INDEX);
             Row row = page.getRow(slotId);
-            if (row.movieId() == movieId1) {
+            String rowId = new String(row.movieId(), StandardCharsets.UTF_8);
+            if (rowId.equals(movieId1)) {
                 found1 = true;
             }
-            else if 
-            (row.movieId() == movieId2) {
+            else if (rowId.equals(movieId2)) {
                 found2 = true;
             }
-            else if (row.movieId() == movieIdExtra) {
+            else if (rowId.equals(movieIdExtra)) {
                 foundExtra = true;
             }
             if (found1 && found2 && foundExtra) {
@@ -183,10 +194,6 @@ public class BTreeCorrectnessTest {
 
     @Test
     void testP1() {
-        BufferManager bf = new BufferManagerImpl(bufferSize);
-        BTreeImpl<String,Rid> movieTitleBtree = new BTreeImpl<String,Rid>(bf, MOVIE_TITLE_INDEX_INDEX);
-        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
-        Utilities.createMovieTitleIndex(bf, movieTitleBtree);
         int[] ranges = {1,2,4,8,16,32,64,128,256};
         long[] scanTableTimes = new long[ranges.length];
         long[] scanTitleIndexTimes = new long[ranges.length];
@@ -239,10 +246,6 @@ public class BTreeCorrectnessTest {
 
     @Test
     void testP2() {
-        BufferManager bf = new BufferManagerImpl(bufferSize);
-        BTreeImpl<String,Rid> movieIdBtree = new BTreeImpl<String,Rid>(bf, MOVIE_ID_INDEX_PAGE_INDEX);
-        Utilities.loadDataset(bf, bf.getFilePath(DATA_PAGE_INDEX));
-        Utilities.createMovieIdIndexUsingBulkInsert(bf, movieIdBtree);
         int[] ranges = {1,2,4,8,16,32,64,128,256};
         long[] scanTableTimes = new long[ranges.length];
         long[] scanIdIndexTimes = new long[ranges.length];
