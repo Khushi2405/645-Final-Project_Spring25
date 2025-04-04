@@ -5,6 +5,7 @@ import static com.database.finalproject.constants.PageConstants.DATABASE_CATALOG
 import static com.database.finalproject.constants.PageConstants.DATABASE_CATALOGUE_KEY_TOTAL_PAGES;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,23 +14,33 @@ import java.util.Map;
 public class DatabaseCatalog {
     private List<Map<String, String>> catalog;
     String catalogFile;
+    RandomAccessFile raf;
 
     public DatabaseCatalog(String catalogFile) {
         this.catalog = new ArrayList<>();
         this.catalogFile = catalogFile;
+        try {
+            this.raf = new RandomAccessFile(catalogFile, "rwd");
+        } catch (Exception e) {
+            // TODO: handle exception
+            System.out.println("Error in RAF, file cannot be created");
+            throw new RuntimeException(e);
+        }
         loadCatalog(catalogFile);
     }
 
     private void loadCatalog(String catalogFile) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(catalogFile))) {
+        try (RandomAccessFile raf = new RandomAccessFile(catalogFile, "r")) {
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = raf.readLine()) != null) {
                 String[] parts = line.split(",");
-                Map<String, String> entry = new HashMap<>();
-                entry.put(DATABASE_CATALOGUE_KEY_FILENAME, parts[0]);
-                entry.put(DATABASE_CATALOGUE_KEY_TOTAL_PAGES, parts[1]);
-                entry.put(DATABASE_CATALOGUE_KEY_ROOT_PAGE, parts[2]);
-                catalog.add(entry);
+                if (parts.length == 3) { // Ensure correct splitting
+                    Map<String, String> entry = new HashMap<>();
+                    entry.put(DATABASE_CATALOGUE_KEY_FILENAME, parts[0].trim());
+                    entry.put(DATABASE_CATALOGUE_KEY_TOTAL_PAGES, parts[1].trim());
+                    entry.put(DATABASE_CATALOGUE_KEY_ROOT_PAGE, parts[2].trim());
+                    catalog.add(entry);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -50,10 +61,12 @@ public class DatabaseCatalog {
     }
 
     public void saveCatalog() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(catalogFile))) {
+        try {
+            this.raf.setLength(0);
             for (Map<String, String> entry : catalog) {
-                writer.write(
-                        entry.get(DATABASE_CATALOGUE_KEY_FILENAME) + "," + entry.get(DATABASE_CATALOGUE_KEY_TOTAL_PAGES)
+                this.raf.writeBytes(
+                        entry.get(DATABASE_CATALOGUE_KEY_FILENAME) + "," +
+                                entry.get(DATABASE_CATALOGUE_KEY_TOTAL_PAGES)
                                 + "," + entry.get(DATABASE_CATALOGUE_KEY_ROOT_PAGE) + "\n");
             }
         } catch (IOException e) {
