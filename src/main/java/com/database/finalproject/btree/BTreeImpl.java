@@ -10,7 +10,6 @@ import java.util.*;
 import static com.database.finalproject.constants.PageConstants.*;
 
 public class BTreeImpl implements BTree<String, Rid> {
-    // TODO: Btree-id changes?
 
     BufferManager bf;
     int rootPageId;

@@ -272,7 +272,7 @@ public class BTreeCorrectnessAndPerformanceTest {
             long startTableTime = System.nanoTime();
             List<Row> result = rangeSearchSequentialScan(startKey, endKey, ATTR_TYPE_TITLE);
             long endTableTime = System.nanoTime();
-            queryTimes[i] = (endTableTime - startTableTime);
+            queryTimes[i] = (endTableTime - startTableTime) / 1000000;
             rowsReturned[i] = result.size();
 
             long startIdTime = System.nanoTime();
@@ -288,7 +288,7 @@ public class BTreeCorrectnessAndPerformanceTest {
                 bf.unpinPage(pageId, DATA_PAGE_INDEX);
             }
             long endIdTime = System.nanoTime();
-            queryTimesIndex[i] = (endIdTime - startIdTime);
+            queryTimesIndex[i] = (endIdTime - startIdTime) / 1000000;
             // rowsReturned[i] = result2.size();
 
             double selectivity = (double) rowsReturned[i] / TOTAL_RECORDS_TITLE * 100;
@@ -296,7 +296,7 @@ public class BTreeCorrectnessAndPerformanceTest {
         }
 
         // Create charts
-        JFreeChart execTimeChart = createExecutionTimeChart(selectivities, queryTimes, queryTimesIndex);
+        JFreeChart execTimeChart = createExecutionTimeChart(selectivities, queryTimes, queryTimesIndex, "(ms)");
         JFreeChart ratioChart = createRatioChart(selectivities, queryTimes, queryTimesIndex);
 
         // Write PNGs (test-safe!)
@@ -328,7 +328,7 @@ public class BTreeCorrectnessAndPerformanceTest {
             long startTableTime = System.nanoTime();
             List<Row> result = rangeSearchSequentialScan(startKey, endKey, ATTR_TYPE_ID);
             long endTableTime = System.nanoTime();
-            queryTimes[i] = (endTableTime - startTableTime);
+            queryTimes[i] = (endTableTime - startTableTime) / 1000000;
             rowsReturned[i] = result.size();
 
             long startIdTime = System.nanoTime();
@@ -344,7 +344,7 @@ public class BTreeCorrectnessAndPerformanceTest {
                 bf.unpinPage(pageId, DATA_PAGE_INDEX);
             }
             long endIdTime = System.nanoTime();
-            queryTimesIndex[i] = (endIdTime - startIdTime);
+            queryTimesIndex[i] = (endIdTime - startIdTime) / 1000000;
             // rowsReturned[i] = result2.size();
 
             double selectivity = (double) rowsReturned[i] / TOTAL_RECORDS_ID * 100;
@@ -352,7 +352,7 @@ public class BTreeCorrectnessAndPerformanceTest {
         }
 
         // Create charts
-        JFreeChart execTimeChart = createExecutionTimeChart(selectivities, queryTimes, queryTimesIndex);
+        JFreeChart execTimeChart = createExecutionTimeChart(selectivities, queryTimes, queryTimesIndex, "(ms)");
         JFreeChart ratioChart = createRatioChart(selectivities, queryTimes, queryTimesIndex);
 
         // Write PNGs (test-safe!)
@@ -407,7 +407,7 @@ public class BTreeCorrectnessAndPerformanceTest {
         }
 
         // Create charts
-        JFreeChart execTimeChart = createExecutionTimeChart(ranges, scanTableTimes, scanIdIndexTimes);
+        JFreeChart execTimeChart = createExecutionTimeChart(ranges, scanTableTimes, scanIdIndexTimes, "(ns)");
         JFreeChart ratioChart = createRatioChart(ranges, scanTableTimes, scanIdIndexTimes);
 
         // Write PNGs (test-safe!)
@@ -529,7 +529,7 @@ public class BTreeCorrectnessAndPerformanceTest {
         }
 
         // Create charts
-        JFreeChart execTimeChart = createExecutionTimeChart(ranges, scanTableTimes, scanIdIndexTimes);
+        JFreeChart execTimeChart = createExecutionTimeChart(ranges, scanTableTimes, scanIdIndexTimes, "(ns)");
         JFreeChart ratioChart = createRatioChart(ranges, scanTableTimes, scanIdIndexTimes);
 
         // Write PNGs (test-safe!)
@@ -538,7 +538,7 @@ public class BTreeCorrectnessAndPerformanceTest {
     }
 
     private static JFreeChart createExecutionTimeChart(int[] ranges, long[] scanTableTimes,
-            long[] scanTitleIndexTimes) {
+            long[] scanTitleIndexTimes, String unit) {
         XYSeries tableSeries = new XYSeries("Scan Table");
         XYSeries indexSeries = new XYSeries("Scan Index");
 
@@ -554,7 +554,7 @@ public class BTreeCorrectnessAndPerformanceTest {
         JFreeChart chart = ChartFactory.createXYLineChart(
                 "Query Execution Time",
                 "Selectivity",
-                "Execution Time",
+                "Execution Time " + unit,
                 dataset,
                 PlotOrientation.VERTICAL,
                 true, true, false);
