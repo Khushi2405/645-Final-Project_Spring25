@@ -55,7 +55,22 @@ To run the project, right-click on the main class or test class and select **Run
 ### Ensure Dependencies
 IntelliJ IDEA should automatically recognize the Maven project and download necessary dependencies. If not, you can manually refresh Maven by navigating to the **Maven** tool window and clicking on the **Refresh** button.
 
+## For lab 2
+- To use the sample dataset, index binary files and database catalogue: 
+https://drive.google.com/file/d/1gaY9AdxEY1KvUNXbqbfPKshZZvMCJGLi/view?usp=sharing
+Download, unzip and place it in the resources/static directory within the project.
+
+- To create index files/binary file of dataset :
+Uncomment in setup() to create index files and update total records in BTreeCorrectNessAndPerformanceTest.java
+
+Reset database_catalogue.txt with the following values:
+src/main/resources/static/data_binary_heap.bin,0,-1
+src/main/resources/static/movie_id_index.bin,0,-1
+src/main/resources/static/movie_title_index.bin,0,-1
+ 
+
 ## Notes
 
 - Ensure that your Java environment is set to version 17 in IntelliJ IDEA by navigating to **File > Project Structure > Project > Project SDK**.
 - If you face any issues with dependencies or configurations, ensure that the `pom.xml` file has been correctly set up for Java 17 and Maven 3.9.9.
+
