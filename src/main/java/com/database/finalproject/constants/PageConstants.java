@@ -23,10 +23,14 @@ public class PageConstants {
 
     public static final String DATA_INPUT_FILE = "src/main/resources/static/data_binary_heap.bin";
     public static final String DATABASE_FILE = "src/main/resources/static/title.basics.tsv";
+    public static final String SAMPLE_RANGES_CSV = "src/main/resources/static/sample_ranges.csv";
 
     public static final String DATABASE_CATALOGUE_KEY_FILENAME = "filename";
     public static final String DATABASE_CATALOGUE_KEY_TOTAL_PAGES = "totalPages";
     public static final String DATABASE_CATALOGUE_KEY_ROOT_PAGE = "rootPage";
+
+    public static final int ATTR_TYPE_ID = 0;
+    public static final int ATTR_TYPE_TITLE = 1;
 
     public static byte[] truncateOrPadByteArray(byte[] value, int maxLength) {
         if (value.length > maxLength) {
@@ -42,12 +46,12 @@ public class PageConstants {
     public static byte[] removeTrailingBytes(byte[] input) {
         int endIndex = input.length;
         for (int i = input.length - 1; i >= 0; i--) {
-            if (input[i] != PADDING_BYTE) {  // Only remove custom padding byte
+            if (input[i] != PADDING_BYTE) { // Only remove custom padding byte
                 endIndex = i + 1;
                 break;
             }
         }
-        return Arrays.copyOf(input,endIndex);
+        return Arrays.copyOf(input, endIndex);
     }
 
     public static byte[] intToBytes(int value, int capacity) {

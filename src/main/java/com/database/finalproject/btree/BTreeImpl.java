@@ -250,17 +250,19 @@ public class BTreeImpl implements BTree<String, Rid> {
         return (IndexPage) bf.getPage(rootPageId, catalogIndex);
     }
 
-    public void printKeys(){
+    public long printKeys() {
         IndexPage nodePage = loadRootPage(rootPageId);
         while (!nodePage.getIsLeaf()) {
             bf.unpinPage(nodePage.getPid(), catalogIndex);
             nodePage = (IndexPage) bf.getPage(bytesToInt(nodePage.pageIds.get(0)), catalogIndex);
         }
         String prev = "";
+        long countRecords = 0;
         while (nodePage != null) {
             for (byte[] key : nodePage.keys) {
+                countRecords++;
                 String curr = new String(removeTrailingBytes(key)).trim();
-                if(prev.compareTo(curr) > 0){
+                if (prev.compareTo(curr) > 0) {
                     System.out.println(prev + " " + curr);
                 }
                 prev = curr;
@@ -269,13 +271,13 @@ public class BTreeImpl implements BTree<String, Rid> {
             // Move to the next leaf node
             if (bytesToInt(nodePage.nextLeaf) != -1) {
                 bf.unpinPage(nodePage.getPid(), catalogIndex);
-                nodePage = (IndexPage) bf.getPage(bytesToInt(nodePage.nextLeaf) , catalogIndex);
+                nodePage = (IndexPage) bf.getPage(bytesToInt(nodePage.nextLeaf), catalogIndex);
             } else {
                 break;
             }
         }
-        System.out.println();
-
+        System.out.println(countRecords);
+        return countRecords;
     }
 
 
