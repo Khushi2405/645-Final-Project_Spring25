@@ -74,3 +74,6 @@ src/main/resources/static/movie_title_index.bin,0,-1
 - Ensure that your Java environment is set to version 17 in IntelliJ IDEA by navigating to **File > Project Structure > Project > Project SDK**.
 - If you face any issues with dependencies or configurations, ensure that the `pom.xml` file has been correctly set up for Java 17 and Maven 3.9.9.
 
+## Reports
+- Lab 1 report: https://docs.google.com/document/d/14tZhnIS2NrNmMGgE8UW-rLMirMoAPfPxxQ8QosYh5Gs/edit?usp=sharing
+- Lab 2 report: https://docs.google.com/document/d/1w-UNgUYhvRam3E4iOgJxwrIdy_nXfXY52g8zrtHz--M/edit?usp=sharing
