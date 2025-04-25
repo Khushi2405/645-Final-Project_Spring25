@@ -1,6 +1,6 @@
 package com.database.finalproject.buffermanager;
 
-import com.database.finalproject.model.Page;
+import com.database.finalproject.model.page.Page;
 
 public abstract class BufferManager {
     final int bufferSize;

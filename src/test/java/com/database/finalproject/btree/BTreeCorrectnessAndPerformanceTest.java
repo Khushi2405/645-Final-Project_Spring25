@@ -2,16 +2,12 @@ package com.database.finalproject.btree;
 
 import static com.database.finalproject.constants.PageConstants.ATTR_TYPE_ID;
 import static com.database.finalproject.constants.PageConstants.ATTR_TYPE_TITLE;
-import static com.database.finalproject.constants.PageConstants.DATABASE_FILE;
-import static com.database.finalproject.constants.PageConstants.DATA_PAGE_INDEX;
+import static com.database.finalproject.constants.PageConstants.MOVIES_DATA_PAGE_INDEX;
 import static com.database.finalproject.constants.PageConstants.MOVIE_ID_INDEX_PAGE_INDEX;
 import static com.database.finalproject.constants.PageConstants.MOVIE_TITLE_INDEX_INDEX;
-import static com.database.finalproject.constants.PageConstants.PADDING_BYTE;
-import static com.database.finalproject.constants.PageConstants.PAGE_SIZE;
 import static com.database.finalproject.constants.PageConstants.SAMPLE_RANGES_CSV;
 import static com.database.finalproject.constants.PageConstants.removeTrailingBytes;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -19,23 +15,18 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
 import java.util.List;
 
-import javax.swing.*;
-import java.awt.*;
-
+import com.database.finalproject.model.page.MovieDataPage;
+import com.database.finalproject.model.record.MovieRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
@@ -46,14 +37,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 import com.database.finalproject.buffermanager.BufferManager;
 import com.database.finalproject.buffermanager.BufferManagerImpl;
-import com.database.finalproject.controller.UserController;
-import com.database.finalproject.model.Page;
-import com.database.finalproject.model.DataPage;
+import com.database.finalproject.model.page.Page;
 import com.database.finalproject.model.Rid;
-import com.database.finalproject.model.Row;
-import com.database.finalproject.repository.Utilities;
-import org.junit.jupiter.api.TestInstance;
-import org.springframework.boot.test.context.TestComponent;
 
 public class BTreeCorrectnessAndPerformanceTest {
     private static BufferManager bf;
@@ -96,14 +81,14 @@ public class BTreeCorrectnessAndPerformanceTest {
             Rid rid = rids.next();
             int pageId = rid.getPageId();
             int slotId = rid.getSlotId();
-            DataPage page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-            Row row = page.getRow(slotId);
-            String rowTitle = new String(removeTrailingBytes(row.movieTitle()), StandardCharsets.UTF_8).trim();
+            MovieDataPage page = (MovieDataPage) bf.getPage(pageId, MOVIES_DATA_PAGE_INDEX);
+            MovieRecord movieRecord = page.getRecord(slotId);
+            String rowTitle = new String(removeTrailingBytes(movieRecord.movieTitle()), StandardCharsets.UTF_8).trim();
             if (rowTitle.equals(movieTitle)) {
                 found = true;
                 break;
             }
-            bf.unpinPage(pageId, DATA_PAGE_INDEX);
+            bf.unpinPage(pageId, MOVIES_DATA_PAGE_INDEX);
         }
         assertTrue(found, "Could not find the movie 'The Derby 1895' using the movie title Btree in the Movies table");
     }
@@ -117,14 +102,14 @@ public class BTreeCorrectnessAndPerformanceTest {
             Rid rid = rids.next();
             int pageId = rid.getPageId();
             int slotId = rid.getSlotId();
-            DataPage page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-            Row row = page.getRow(slotId);
-            String rowId = new String(removeTrailingBytes(row.movieId()), StandardCharsets.UTF_8).trim();
+            MovieDataPage page = (MovieDataPage) bf.getPage(pageId, MOVIES_DATA_PAGE_INDEX);
+            MovieRecord movieRecord = page.getRecord(slotId);
+            String rowId = new String(removeTrailingBytes(movieRecord.movieId()), StandardCharsets.UTF_8).trim();
             if (rowId.equals(movieId)) {
                 found = true;
                 break;
             }
-            bf.unpinPage(pageId, DATA_PAGE_INDEX);
+            bf.unpinPage(pageId, MOVIES_DATA_PAGE_INDEX);
         }
         assertTrue(found, "Could not find the movie 'tt0000020' using the movie id Btree in the Movies table");
     }
@@ -142,9 +127,9 @@ public class BTreeCorrectnessAndPerformanceTest {
             Rid rid = rids.next();
             int pageId = rid.getPageId();
             int slotId = rid.getSlotId();
-            DataPage page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-            Row row = page.getRow(slotId);
-            String rowTitle = new String(removeTrailingBytes(row.movieTitle()), StandardCharsets.UTF_8).trim();
+            MovieDataPage page = (MovieDataPage) bf.getPage(pageId, MOVIES_DATA_PAGE_INDEX);
+            MovieRecord movieRecord = page.getRecord(slotId);
+            String rowTitle = new String(removeTrailingBytes(movieRecord.movieTitle()), StandardCharsets.UTF_8).trim();
             if (rowTitle.equals(movieTitle1)) {
                 found1 = true;
             } else if (rowTitle.equals(movieTitle2)) {
@@ -155,7 +140,7 @@ public class BTreeCorrectnessAndPerformanceTest {
             if (found1 && found2 && foundExtra) {
                 break;
             }
-            bf.unpinPage(pageId, DATA_PAGE_INDEX);
+            bf.unpinPage(pageId, MOVIES_DATA_PAGE_INDEX);
         }
         assertTrue(found1 && found2 && foundExtra,
                 "Could not find the movies using Range Search using the movie title Btree in the Movies table");
@@ -174,9 +159,9 @@ public class BTreeCorrectnessAndPerformanceTest {
             Rid rid = rids.next();
             int pageId = rid.getPageId();
             int slotId = rid.getSlotId();
-            DataPage page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-            Row row = page.getRow(slotId);
-            String rowId = new String(removeTrailingBytes(row.movieId()), StandardCharsets.UTF_8).trim();
+            MovieDataPage page = (MovieDataPage) bf.getPage(pageId, MOVIES_DATA_PAGE_INDEX);
+            MovieRecord movieRecord = page.getRecord(slotId);
+            String rowId = new String(removeTrailingBytes(movieRecord.movieId()), StandardCharsets.UTF_8).trim();
             if (rowId.equals(movieId1)) {
                 found1 = true;
             } else if (rowId.equals(movieId2)) {
@@ -187,7 +172,7 @@ public class BTreeCorrectnessAndPerformanceTest {
             if (found1 && found2 && foundExtra) {
                 break;
             }
-            bf.unpinPage(pageId, DATA_PAGE_INDEX);
+            bf.unpinPage(pageId, MOVIES_DATA_PAGE_INDEX);
         }
         assertTrue(found1 && found2 && foundExtra,
                 "Could not find the movies using Range Search using the movie id Btree in the Movies table");
@@ -204,8 +189,8 @@ public class BTreeCorrectnessAndPerformanceTest {
     // int p = 0;
     // int r = 0;
     // while (j < ranges[i]) {
-    // DataPage page = (DataPage) bf.getPage(p, DATA_PAGE_INDEX);
-    // Row row = page.getRow(r);
+    // MovieDataPage page = (MovieDataPage) bf.getPage(p, DATA_PAGE_INDEX);
+    // MovieRecord row = page.getRow(r);
     // if (row != null) {
     // j++;
     // r++;
@@ -226,8 +211,8 @@ public class BTreeCorrectnessAndPerformanceTest {
     // for (Rid rid : rids) {
     // int pageId = rid.getPageId();
     // int slotId = rid.getSlotId();
-    // DataPage page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-    // Row row = page.getRow(slotId);
+    // MovieDataPage page = (MovieDataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
+    // MovieRecord row = page.getRow(slotId);
     // }
     // long endTitleTime = System.nanoTime();
     // scanTitleIndexTimes[i] = startTitleTime - endTitleTime;
@@ -270,22 +255,22 @@ public class BTreeCorrectnessAndPerformanceTest {
             }
 
             long startTableTime = System.nanoTime();
-            List<Row> result = rangeSearchSequentialScan(startKey, endKey, ATTR_TYPE_TITLE);
+            List<MovieRecord> result = rangeSearchSequentialScan(startKey, endKey, ATTR_TYPE_TITLE);
             long endTableTime = System.nanoTime();
             queryTimes[i] = (endTableTime - startTableTime) / 1000000;
             rowsReturned[i] = result.size();
 
             long startIdTime = System.nanoTime();
             Iterator<Rid> rids = movieTitleBtree.rangeSearch(startKey, endKey);
-            List<Row> result2 = new ArrayList<>();
+            List<MovieRecord> result2 = new ArrayList<>();
             while (rids.hasNext()) {
                 Rid rid = rids.next();
                 int pageId = rid.getPageId();
                 int slotId = rid.getSlotId();
-                DataPage page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-                Row row = page.getRow(slotId);
-                result2.add(row);
-                bf.unpinPage(pageId, DATA_PAGE_INDEX);
+                MovieDataPage page = (MovieDataPage) bf.getPage(pageId, MOVIES_DATA_PAGE_INDEX);
+                MovieRecord movieRecord = page.getRecord(slotId);
+                result2.add(movieRecord);
+                bf.unpinPage(pageId, MOVIES_DATA_PAGE_INDEX);
             }
             long endIdTime = System.nanoTime();
             queryTimesIndex[i] = (endIdTime - startIdTime) / 1000000;
@@ -326,22 +311,22 @@ public class BTreeCorrectnessAndPerformanceTest {
             }
 
             long startTableTime = System.nanoTime();
-            List<Row> result = rangeSearchSequentialScan(startKey, endKey, ATTR_TYPE_ID);
+            List<MovieRecord> result = rangeSearchSequentialScan(startKey, endKey, ATTR_TYPE_ID);
             long endTableTime = System.nanoTime();
             queryTimes[i] = (endTableTime - startTableTime) / 1000000;
             rowsReturned[i] = result.size();
 
             long startIdTime = System.nanoTime();
             Iterator<Rid> rids = movieIdBtree.rangeSearch(startKey, endKey);
-            List<Row> result2 = new ArrayList<>();
+            List<MovieRecord> result2 = new ArrayList<>();
             while (rids.hasNext()) {
                 Rid rid = rids.next();
                 int pageId = rid.getPageId();
                 int slotId = rid.getSlotId();
-                DataPage page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-                Row row = page.getRow(slotId);
-                result2.add(row);
-                bf.unpinPage(pageId, DATA_PAGE_INDEX);
+                MovieDataPage page = (MovieDataPage) bf.getPage(pageId, MOVIES_DATA_PAGE_INDEX);
+                MovieRecord movieRecord = page.getRecord(slotId);
+                result2.add(movieRecord);
+                bf.unpinPage(pageId, MOVIES_DATA_PAGE_INDEX);
             }
             long endIdTime = System.nanoTime();
             queryTimesIndex[i] = (endIdTime - startIdTime) / 1000000;
@@ -373,16 +358,16 @@ public class BTreeCorrectnessAndPerformanceTest {
             int j = 0;
             int p = 0;
             int r = 0;
-            DataPage page = (DataPage) bf.getPage(p, DATA_PAGE_INDEX);
+            MovieDataPage page = (MovieDataPage) bf.getPage(p, MOVIES_DATA_PAGE_INDEX);
             while (j < ranges[i]) {
-                Row row = page.getRow(r);
-                if (row != null) {
+                MovieRecord movieRecord = page.getRecord(r);
+                if (movieRecord != null) {
                     j++;
                     r++;
                 } else {
-                    bf.unpinPage(p, DATA_PAGE_INDEX);
+                    bf.unpinPage(p, MOVIES_DATA_PAGE_INDEX);
                     p++;
-                    page = (DataPage) bf.getPage(p, DATA_PAGE_INDEX);
+                    page = (MovieDataPage) bf.getPage(p, MOVIES_DATA_PAGE_INDEX);
                     r = 0;
                 }
             }
@@ -398,9 +383,9 @@ public class BTreeCorrectnessAndPerformanceTest {
                 Rid rid = rids.next();
                 int pageId = rid.getPageId();
                 int slotId = rid.getSlotId();
-                page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-                Row row = page.getRow(slotId);
-                bf.unpinPage(pageId, DATA_PAGE_INDEX);
+                page = (MovieDataPage) bf.getPage(pageId, MOVIES_DATA_PAGE_INDEX);
+                MovieRecord movieRecord = page.getRecord(slotId);
+                bf.unpinPage(pageId, MOVIES_DATA_PAGE_INDEX);
             }
             long endIdTime = System.nanoTime();
             scanIdIndexTimes[i] = endIdTime - startIdTime;
@@ -437,8 +422,8 @@ public class BTreeCorrectnessAndPerformanceTest {
     // int p = 0;
     // int r = 0;
     // while (j < ranges[i]) {
-    // DataPage page = (DataPage) bf.getPage(p, DATA_PAGE_INDEX);
-    // Row row = page.getRow(r);
+    // MovieDataPage page = (MovieDataPage) bf.getPage(p, DATA_PAGE_INDEX);
+    // MovieRecord row = page.getRow(r);
     // if (row != null) {
     // j++;
     // r++;
@@ -459,8 +444,8 @@ public class BTreeCorrectnessAndPerformanceTest {
     // for (Rid rid : rids) {
     // int pageId = rid.getPageId();
     // int slotId = rid.getSlotId();
-    // DataPage page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-    // Row row = page.getRow(slotId);
+    // MovieDataPage page = (MovieDataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
+    // MovieRecord row = page.getRow(slotId);
     // }
     // long endTitleTime = System.nanoTime();
     // scanTitleIndexTimes[i] = startTitleTime - endTitleTime;
@@ -495,16 +480,16 @@ public class BTreeCorrectnessAndPerformanceTest {
             int j = 0;
             int p = 0;
             int r = 0;
-            DataPage page = (DataPage) bf.getPage(p, DATA_PAGE_INDEX);
+            MovieDataPage page = (MovieDataPage) bf.getPage(p, MOVIES_DATA_PAGE_INDEX);
             while (j < ranges[i]) {
-                Row row = page.getRow(r);
-                if (row != null) {
+                MovieRecord movieRecord = page.getRecord(r);
+                if (movieRecord != null) {
                     j++;
                     r++;
                 } else {
-                    bf.unpinPage(p, DATA_PAGE_INDEX);
+                    bf.unpinPage(p, MOVIES_DATA_PAGE_INDEX);
                     p++;
-                    page = (DataPage) bf.getPage(p, DATA_PAGE_INDEX);
+                    page = (MovieDataPage) bf.getPage(p, MOVIES_DATA_PAGE_INDEX);
                     r = 0;
                 }
             }
@@ -520,9 +505,9 @@ public class BTreeCorrectnessAndPerformanceTest {
                 Rid rid = rids.next();
                 int pageId = rid.getPageId();
                 int slotId = rid.getSlotId();
-                page = (DataPage) bf.getPage(pageId, DATA_PAGE_INDEX);
-                Row row = page.getRow(slotId);
-                bf.unpinPage(pageId, DATA_PAGE_INDEX);
+                page = (MovieDataPage) bf.getPage(pageId, MOVIES_DATA_PAGE_INDEX);
+                MovieRecord movieRecord = page.getRecord(slotId);
+                bf.unpinPage(pageId, MOVIES_DATA_PAGE_INDEX);
             }
             long endIdTime = System.nanoTime();
             scanIdIndexTimes[i] = endIdTime - startIdTime;
@@ -602,25 +587,25 @@ public class BTreeCorrectnessAndPerformanceTest {
         return String.format("tt%07d", randomId); // Example format: tt0001234
     }
 
-    private List<Row> rangeSearchSequentialScan(String startKey, String endKey, int attrType) {
-        List<Row> movies = new ArrayList<>();
+    private List<MovieRecord> rangeSearchSequentialScan(String startKey, String endKey, int attrType) {
+        List<MovieRecord> movies = new ArrayList<>();
         int dataPageId = 0;
         while (true) {
-            Page currPage = bf.getPage(dataPageId, DATA_PAGE_INDEX);
+            Page currPage = bf.getPage(dataPageId, MOVIES_DATA_PAGE_INDEX);
             if (currPage == null)
                 break;
             for (int i = 0; i < 105; i++) {
-                Row row = ((DataPage) currPage).getRow(i);
-                if (row == null)
+                MovieRecord movieRecord = ((MovieDataPage) currPage).getRecord(i);
+                if (movieRecord == null)
                     break;
 
-                byte[] key = attrType == ATTR_TYPE_ID ? row.movieId() : row.movieTitle();
+                byte[] key = attrType == ATTR_TYPE_ID ? movieRecord.movieId() : movieRecord.movieTitle();
                 if (new String(removeTrailingBytes(key)).compareTo(startKey) >= 0
                         && new String(removeTrailingBytes(key)).compareTo(endKey) <= 0) {
-                    movies.add(row);
+                    movies.add(movieRecord);
                 }
             }
-            bf.unpinPage(dataPageId, DATA_PAGE_INDEX);
+            bf.unpinPage(dataPageId, MOVIES_DATA_PAGE_INDEX);
             dataPageId++;
         }
         return movies;
