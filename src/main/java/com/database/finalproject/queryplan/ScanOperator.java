@@ -26,7 +26,7 @@ public class ScanOperator<T extends ParentRecord> implements Operator {
     }
 
     @Override
-    public ParentRecord next() {
+    public T next() {
         while (currentPage != null) {
             T record = currentPage.getRecord(currentRowId);
             currentRowId++;

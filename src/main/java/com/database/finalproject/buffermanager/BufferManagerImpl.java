@@ -149,10 +149,10 @@ public class BufferManagerImpl extends BufferManager {
             logger.error("Incorrect index for page");
             return null;
         }
-        catalog.setCatalog(catalogIndex, "totalPages", String.valueOf(pageCount));
+        catalog.setCatalog(catalogIndex, DATABASE_CATALOGUE_KEY_TOTAL_PAGES, String.valueOf(pageCount));
         DLLNode currNode = new DLLNode(page, catalogIndex);
         addNewPage(new Pair<>(page.getPid(), catalogIndex), currNode);
-        markDirty(page.getPid(), index);
+        if(catalogIndex >= 0 ) markDirty(page.getPid(), catalogIndex);
         return page;
     }
 
@@ -241,6 +241,12 @@ public class BufferManagerImpl extends BufferManager {
     public String getFilePath(int index) {
         int catalogIndex = getCatalogIndex(index);
         return catalog.getCatalog(catalogIndex).get(DATABASE_CATALOGUE_KEY_FILENAME);
+    }
+
+    @Override
+    public int getTotalPages(int index) {
+        int catalogIndex = getCatalogIndex(index);
+        return Integer.parseInt(catalog.getCatalog(catalogIndex).get(DATABASE_CATALOGUE_KEY_TOTAL_PAGES));
     }
 
     private void bringPageFront(DLLNode currNode) {

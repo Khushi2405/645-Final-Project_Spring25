@@ -8,9 +8,18 @@ public class PageConstants {
     public static final int MOVIE_ROW_SIZE = 39; // 9 bytes for movieId + 30 bytes for title
     public static final int PEOPLE_ROW_SIZE = 115; // 10 bytes for personId + 105 bytes for name
     public static final int WORKED_ON_ROW_SIZE = 39; // 9 bytes for movieId + 10 bytes for personId + 20 bytes for category
+    public static final int MOVIE_WORKED_ON_JOIN_ROW_SIZE = 49; // 9 bytes for movieId + 10 bytes for personId + 30 bytes for title
+    public static final int MOVIE_WORKED_ON_PEOPLE_JOIN_ROW_SIZE = 135; // 9 bytes for movieId + 10 bytes for personId + 20 bytes for category
+    public static final int MOVIE_PERSON_ROW_SIZE = 19; // 9 bytes for movieId + 10 bytes for personId + 20 bytes for category
     public static final int MOVIE_PAGE_ROW_LIMIT = PAGE_SIZE / MOVIE_ROW_SIZE;
     public static final int PEOPLE_PAGE_ROW_LIMIT = PAGE_SIZE / PEOPLE_ROW_SIZE;
     public static final int WORKED_ON_PAGE_ROW_LIMIT = PAGE_SIZE / WORKED_ON_ROW_SIZE;
+
+    public static final int MOVIE_WORKED_ON_JOIN_ROW_LIMIT = PAGE_SIZE / MOVIE_WORKED_ON_JOIN_ROW_SIZE;
+
+    public static final int MOVIE_WORKED_ON_PEOPLE_JOIN_ROW_LIMIT = PAGE_SIZE / MOVIE_WORKED_ON_PEOPLE_JOIN_ROW_SIZE;
+
+    public static final int MOVIE_PERSON_ROW_LIMIT = PAGE_SIZE / MOVIE_PERSON_ROW_SIZE;
     public static final byte PADDING_BYTE = 0x7F;
     public static final int MOVIE_ID_SIZE = 9; // Movie ID size (9 bytes)
     public static final int MOVIE_TITLE_SIZE = 30;
@@ -26,6 +35,8 @@ public class PageConstants {
     public static final int PEOPLE_DATA_PAGE_INDEX = 4;
     public static final int MOVIE_ID_INDEX_PAGE_INDEX = 1;
     public static final int MOVIE_TITLE_INDEX_INDEX = 2;
+    public static final int BNL_MOVIE_WORKED_ON_INDEX = -1;
+    public static final int BNL_MOVIE_WORKED_ON_PEOPLE_INDEX = -2;
 
     public static final String MOVIE_DATABASE_FILE = "src/main/resources/static/title.basics.tsv";
     public static final String WORKED_ON_DATABASE_FILE = "src/main/resources/static/title.principals.tsv";
@@ -35,6 +46,7 @@ public class PageConstants {
     public static final String DATABASE_CATALOGUE_KEY_FILENAME = "filename";
     public static final String DATABASE_CATALOGUE_KEY_TOTAL_PAGES = "totalPages";
     public static final String DATABASE_CATALOGUE_KEY_ROOT_PAGE = "rootPage";
+
 
     public static final int ATTR_TYPE_ID = 0;
     public static final int ATTR_TYPE_TITLE = 1;
