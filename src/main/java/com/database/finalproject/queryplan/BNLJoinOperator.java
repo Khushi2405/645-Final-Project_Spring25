@@ -1,8 +1,16 @@
 package com.database.finalproject.queryplan;
 
 import com.database.finalproject.model.record.ParentRecord;
-// import com.database.finalproject.model.record.Rid;
-import com.database.finalproject.model.record.JoinedRecord;
+import com.database.finalproject.model.record.PeopleRecord;
+import com.database.finalproject.model.record.WorkedOnRecord;
+import com.database.finalproject.buffermanager.BufferManagerImpl;
+import com.database.finalproject.model.page.DataPage;
+import com.database.finalproject.model.record.MovieRecord;
+import com.database.finalproject.model.record.MovieWorkedOnJoinRecord;
+import com.database.finalproject.model.record.MovieWorkedOnPeopleJoinRecord;
+
+import static com.database.finalproject.constants.PageConstants.BNL_MOVIE_WORKED_ON_INDEX;
+import static com.database.finalproject.constants.PageConstants.BNL_MOVIE_WORKED_ON_PEOPLE_INDEX;
 
 import java.util.*;
 
@@ -12,20 +20,22 @@ public class BNLJoinOperator<T extends ParentRecord> implements Operator {
     private final int joinAttrLeft;
     private final int joinAttrRight;
     private final int blockSize;
-    private final int recordsPerPage;
+    private final int joinResultType;
+    private final BufferManagerImpl bufferManager;
 
     private Map<String, List<T>> hashTable;
     private Iterator<T> outerMatchesIterator;
     private T currentRightRecord;
 
     public BNLJoinOperator(Operator leftChild, Operator rightChild, int joinAttrLeft, int joinAttrRight, int blockSize,
-            int recordsPerPage) {
+            BufferManagerImpl bf, int joinResultType) {
         this.leftChild = leftChild;
         this.rightChild = rightChild;
         this.joinAttrLeft = joinAttrLeft;
         this.joinAttrRight = joinAttrRight;
         this.blockSize = blockSize;
-        this.recordsPerPage = recordsPerPage;
+        this.joinResultType = joinResultType;
+        this.bufferManager = bf;
     }
 
     @Override
@@ -41,7 +51,7 @@ public class BNLJoinOperator<T extends ParentRecord> implements Operator {
         while (true) {
             if (outerMatchesIterator != null && outerMatchesIterator.hasNext()) {
                 T outerRecord = outerMatchesIterator.next();
-                return joinRecords(outerRecord, currentRightRecord);
+                return (T) joinRecords(outerRecord, currentRightRecord);
             }
 
             currentRightRecord = (T) rightChild.next();
@@ -73,23 +83,44 @@ public class BNLJoinOperator<T extends ParentRecord> implements Operator {
         rightChild.close();
         rightChild.open();
 
-        int count = 0;
-        int maxRecordsInBlock = blockSize * recordsPerPage;
-        while (count < maxRecordsInBlock) {
-            T record = (T) leftChild.next();
-            if (record == null)
+        // todo: unpin pages
+        DataPage<T> page = (DataPage<T>) bufferManager.createPage(joinResultType);
+        while (true) {
+            while (!page.isFull()) {
+                T record = (T) leftChild.next();
+                page.insertRecord(record);
+                if (record == null)
+                    break;
+                String key = record.getFieldByIndex(joinAttrLeft);
+                hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(record);
+            }
+            if (page.getPid() + 1 == blockSize) {
                 break;
-            String key = record.getFieldByIndex(joinAttrLeft);
-            hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(record);
-            count++;
+            }
+            page = (DataPage<T>) bufferManager.createPage(joinResultType);
         }
         return !hashTable.isEmpty();
     }
 
     private T joinRecords(T left, T right) {
-        // Implement how to combine two records from left and right child into a new
-        // record.
-        // You may use a custom `JoinedRecord` class that implements `ParentRecord`.
-        return (T) new JoinedRecord(left, right);
+        if (joinResultType == BNL_MOVIE_WORKED_ON_INDEX) {
+            MovieRecord movie = (MovieRecord) left;
+            WorkedOnRecord workedOn = (WorkedOnRecord) right;
+
+            byte[] movieId = movie.movieId();
+            byte[] title = movie.movieTitle();
+            byte[] personId = workedOn.personId();
+            return (T) new MovieWorkedOnJoinRecord(movieId, personId, title);
+        } else if (joinResultType == BNL_MOVIE_WORKED_ON_PEOPLE_INDEX) {
+            MovieWorkedOnJoinRecord joined = (MovieWorkedOnJoinRecord) left;
+            PeopleRecord person = (PeopleRecord) right;
+
+            byte[] title = joined.title();
+            byte[] name = person.name();
+            return (T) new MovieWorkedOnPeopleJoinRecord(title, name);
+        }
+
+        System.err.println("Incorrect JOIN result type");
+        return null;
     }
 }

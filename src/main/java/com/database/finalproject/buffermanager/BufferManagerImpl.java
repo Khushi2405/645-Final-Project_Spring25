@@ -31,6 +31,8 @@ public class BufferManagerImpl extends BufferManager {
     RandomAccessFile workedOnDataRaf;
     RandomAccessFile movieIdIndexRaf;
     RandomAccessFile movieTitleRaf;
+    int movieWorksOnBlockPageCount = 0;
+    int movieWorksOnPeopleBlockPageCount = 0;
     public static Logger logger = LoggerFactory.getLogger(BufferManagerImpl.class);
 
     public BufferManagerImpl(@Value("${buffer.size:10}") int bufferSize) {
@@ -129,7 +131,14 @@ public class BufferManagerImpl extends BufferManager {
             }
         }
         // TODO: handle pagecount
-        int pageCount = catalogIndex < 0 ? 0 : Integer.parseInt(catalog.getCatalog(catalogIndex).get("totalPages"));
+        int pageCount;
+        if (catalogIndex == -1) {
+            pageCount = movieWorksOnBlockPageCount;
+        } else if (catalogIndex == -2) {
+            pageCount = movieWorksOnPeopleBlockPageCount;
+        } else {
+            pageCount = Integer.parseInt(catalog.getCatalog(catalogIndex).get("totalPages"));
+        }
         Page page;
         if(catalogIndex == MOVIES_DATA_PAGE_INDEX) {
             page = new MovieDataPage(pageCount++);
@@ -146,9 +155,9 @@ public class BufferManagerImpl extends BufferManager {
         else if(catalogIndex == PEOPLE_DATA_PAGE_INDEX){
             page = new PeopleDataPage(pageCount++);
         } else if (catalogIndex == BNL_MOVIE_WORKED_ON_INDEX) {
-            page = new MoviesWorkedOnJoinPage(pageCount++);
+            page = new MovieDataPage(pageCount++);
         } else if (catalogIndex == BNL_MOVIE_WORKED_ON_PEOPLE_INDEX) {
-            page = new MoviesWorkedOnPeopleJoinPage(pageCount++);
+            page = new MoviesWorkedOnJoinPage(pageCount++);
         } else {
             logger.error("Incorrect index for page");
             return null;
