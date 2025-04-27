@@ -128,7 +128,8 @@ public class BufferManagerImpl extends BufferManager {
                 return null;
             }
         }
-        int pageCount = Integer.parseInt(catalog.getCatalog(catalogIndex).get("totalPages"));
+        // TODO: handle pagecount
+        int pageCount = catalogIndex < 0 ? 0 : Integer.parseInt(catalog.getCatalog(catalogIndex).get("totalPages"));
         Page page;
         if(catalogIndex == MOVIES_DATA_PAGE_INDEX) {
             page = new MovieDataPage(pageCount++);
@@ -144,15 +145,21 @@ public class BufferManagerImpl extends BufferManager {
         }
         else if(catalogIndex == PEOPLE_DATA_PAGE_INDEX){
             page = new PeopleDataPage(pageCount++);
-        }
-        else{
+        } else if (catalogIndex == BNL_MOVIE_WORKED_ON_INDEX) {
+            page = new MoviesWorkedOnJoinPage(pageCount++);
+        } else if (catalogIndex == BNL_MOVIE_WORKED_ON_PEOPLE_INDEX) {
+            page = new MoviesWorkedOnPeopleJoinPage(pageCount++);
+        } else {
             logger.error("Incorrect index for page");
             return null;
         }
-        catalog.setCatalog(catalogIndex, DATABASE_CATALOGUE_KEY_TOTAL_PAGES, String.valueOf(pageCount));
+        if (catalogIndex >= 0) {
+            catalog.setCatalog(catalogIndex, DATABASE_CATALOGUE_KEY_TOTAL_PAGES, String.valueOf(pageCount));
+        }
         DLLNode currNode = new DLLNode(page, catalogIndex);
         addNewPage(new Pair<>(page.getPid(), catalogIndex), currNode);
-        if(catalogIndex >= 0 ) markDirty(page.getPid(), catalogIndex);
+        if (catalogIndex >= 0)
+            markDirty(page.getPid(), catalogIndex);
         return page;
     }
 
@@ -185,6 +192,9 @@ public class BufferManagerImpl extends BufferManager {
     @Override
     public void writeToBinaryFile(Page page, int ...index) {
         int catalogIndex = getCatalogIndex(index);
+        if (catalogIndex < 0) {
+            return;
+        }
         RandomAccessFile raf;
         if (catalogIndex == MOVIES_DATA_PAGE_INDEX) raf = movieDataRaf;
         else if (catalogIndex == PEOPLE_DATA_PAGE_INDEX) raf = peopleDataRaf;
