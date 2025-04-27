@@ -80,10 +80,11 @@ public class BNLJoinOperator<T extends ParentRecord> implements Operator {
 
     private boolean loadNextLeftBlock() {
         hashTable.clear();
+        // TODO: close or reset scan???
         rightChild.close();
         rightChild.open();
 
-        // todo: unpin pages
+        unpinLeftBlock();
         DataPage<T> page = (DataPage<T>) bufferManager.createPage(joinResultType);
         while (true) {
             while (!page.isFull()) {
@@ -100,6 +101,13 @@ public class BNLJoinOperator<T extends ParentRecord> implements Operator {
             page = (DataPage<T>) bufferManager.createPage(joinResultType);
         }
         return !hashTable.isEmpty();
+    }
+
+    private void unpinLeftBlock() {
+        for (int i = 0; i < blockSize; i++) {
+            bufferManager.unpinPage(i, joinResultType);
+        }
+        bufferManager.resetBlockPageCount(joinResultType);
     }
 
     private T joinRecords(T left, T right) {

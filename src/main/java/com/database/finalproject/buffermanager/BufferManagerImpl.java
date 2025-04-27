@@ -268,6 +268,15 @@ public class BufferManagerImpl extends BufferManager {
         return Integer.parseInt(catalog.getCatalog(catalogIndex).get(DATABASE_CATALOGUE_KEY_TOTAL_PAGES));
     }
 
+    public void resetBlockPageCount(int index) {
+        if (index == BNL_MOVIE_WORKED_ON_INDEX) {
+            movieWorksOnBlockPageCount = 0;
+        }
+        if (index == BNL_MOVIE_WORKED_ON_PEOPLE_INDEX) {
+            movieWorksOnPeopleBlockPageCount = 0;
+        }
+    }
+
     private void bringPageFront(DLLNode currNode) {
         // if node is already at front don't do anything
         if (currNode == headBufferPool)
