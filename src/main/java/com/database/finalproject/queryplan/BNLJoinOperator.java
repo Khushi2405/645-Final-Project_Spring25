@@ -81,8 +81,8 @@ public class BNLJoinOperator<T extends ParentRecord> implements Operator {
     private boolean loadNextLeftBlock() {
         hashTable.clear();
         // TODO: close or reset scan???
-        rightChild.close();
-        rightChild.open();
+        // rightChild.close();
+        // rightChild.open();
 
         unpinLeftBlock();
         DataPage<T> page = (DataPage<T>) bufferManager.createPage(joinResultType);

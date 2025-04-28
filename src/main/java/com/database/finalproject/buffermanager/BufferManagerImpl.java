@@ -33,6 +33,7 @@ public class BufferManagerImpl extends BufferManager {
     RandomAccessFile movieTitleRaf;
     int movieWorksOnBlockPageCount = 0;
     int movieWorksOnPeopleBlockPageCount = 0;
+    int ioCount = 0;
     public static Logger logger = LoggerFactory.getLogger(BufferManagerImpl.class);
 
     public BufferManagerImpl(@Value("${buffer.size:10}") int bufferSize) {
@@ -81,6 +82,7 @@ public class BufferManagerImpl extends BufferManager {
     @Override
     public Page getPage(int pageId, int ...index) {
         // Logic to fetch a page from buffer
+        incrementIO();
         int catalogIndex = getCatalogIndex(index);
         Pair<Integer, Integer> pair = new Pair(pageId, catalogIndex);
         // if page id already in buffer then move it to front and increment the pin counter
@@ -121,6 +123,7 @@ public class BufferManagerImpl extends BufferManager {
     public Page createPage(int ...index) {
         // Logic to create a new page
 
+        incrementIO();
         int catalogIndex = getCatalogIndex(index);
 
         if (pageHash.size() > bufferSize - 1) {
@@ -130,7 +133,6 @@ public class BufferManagerImpl extends BufferManager {
                 return null;
             }
         }
-        // TODO: handle pagecount
         int pageCount;
         if (catalogIndex == -1) {
             pageCount = movieWorksOnBlockPageCount;
@@ -469,9 +471,21 @@ public class BufferManagerImpl extends BufferManager {
         return catalogIndex;
     }
 
-    public void printList(){
+    public synchronized void resetIOCount() {
+        ioCount = 0;
+    }
+
+    public synchronized int getIOCount() {
+        return ioCount;
+    }
+
+    private synchronized void incrementIO() {
+        ioCount++;
+    }
+
+    public void printList() {
         DLLNode node = headBufferPool;
-        while(node != null){
+        while (node != null) {
             System.out.print(node.page.getPid() + " ");
             node = node.next;
         }
