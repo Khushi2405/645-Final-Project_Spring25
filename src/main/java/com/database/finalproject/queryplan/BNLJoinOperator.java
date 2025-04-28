@@ -5,6 +5,7 @@ import com.database.finalproject.model.record.PeopleRecord;
 import com.database.finalproject.model.record.WorkedOnRecord;
 import com.database.finalproject.buffermanager.BufferManagerImpl;
 import com.database.finalproject.model.page.DataPage;
+import com.database.finalproject.model.record.MoviePersonRecord;
 import com.database.finalproject.model.record.MovieRecord;
 import com.database.finalproject.model.record.MovieWorkedOnJoinRecord;
 import com.database.finalproject.model.record.MovieWorkedOnPeopleJoinRecord;
@@ -115,7 +116,7 @@ public class BNLJoinOperator<T extends ParentRecord> implements Operator {
     private T joinRecords(T left, T right) {
         if (joinResultType == BNL_MOVIE_WORKED_ON_INDEX) {
             MovieRecord movie = (MovieRecord) left;
-            WorkedOnRecord workedOn = (WorkedOnRecord) right;
+            MoviePersonRecord workedOn = (MoviePersonRecord) right;
 
             byte[] movieId = movie.movieId();
             byte[] title = movie.movieTitle();
