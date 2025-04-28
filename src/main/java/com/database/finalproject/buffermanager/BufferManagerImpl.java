@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import com.database.finalproject.model.page.*;
+import com.database.finalproject.model.record.MoviePersonRecord;
 import com.database.finalproject.model.record.MovieRecord;
 import com.database.finalproject.model.record.PeopleRecord;
 import com.database.finalproject.model.record.WorkedOnRecord;
@@ -29,6 +30,7 @@ public class BufferManagerImpl extends BufferManager {
     RandomAccessFile movieDataRaf;
     RandomAccessFile peopleDataRaf;
     RandomAccessFile workedOnDataRaf;
+    RandomAccessFile moviePersonDataRaf;
     RandomAccessFile movieIdIndexRaf;
     RandomAccessFile movieTitleRaf;
     int movieWorksOnBlockPageCount = 0;
@@ -52,6 +54,13 @@ public class BufferManagerImpl extends BufferManager {
         }
         try {
             peopleDataRaf = new RandomAccessFile(catalog.getCatalog(PEOPLE_DATA_PAGE_INDEX).get("filename"), "rw");
+//            System.out.println(dataRaf.length()/PAGE_SIZE);
+        } catch (IOException e) {
+            System.out.println("Error in RAF, file cannot be created");
+            throw new RuntimeException(e);
+        }
+        try {
+            moviePersonDataRaf = new RandomAccessFile(catalog.getCatalog(MOVIE_PERSON_DATA_PAGE_INDEX).get("filename"), "rw");
 //            System.out.println(dataRaf.length()/PAGE_SIZE);
         } catch (IOException e) {
             System.out.println("Error in RAF, file cannot be created");
@@ -154,11 +163,17 @@ public class BufferManagerImpl extends BufferManager {
         }
         else if(catalogIndex == PEOPLE_DATA_PAGE_INDEX){
             page = new PeopleDataPage(pageCount++);
-        } else if (catalogIndex == BNL_MOVIE_WORKED_ON_INDEX) {
+        }
+        else if(catalogIndex == MOVIE_PERSON_DATA_PAGE_INDEX){
+            page = new MoviePersonDataPage(pageCount++);
+        }
+        else if (catalogIndex == BNL_MOVIE_WORKED_ON_INDEX) {
             page = new MovieDataPage(pageCount++);
-        } else if (catalogIndex == BNL_MOVIE_WORKED_ON_PEOPLE_INDEX) {
+        }
+        else if (catalogIndex == BNL_MOVIE_WORKED_ON_PEOPLE_INDEX) {
             page = new MoviesWorkedOnJoinPage(pageCount++);
-        } else {
+        }
+        else {
             logger.error("Incorrect index for page");
             return null;
         }
@@ -208,6 +223,7 @@ public class BufferManagerImpl extends BufferManager {
         if (catalogIndex == MOVIES_DATA_PAGE_INDEX) raf = movieDataRaf;
         else if (catalogIndex == PEOPLE_DATA_PAGE_INDEX) raf = peopleDataRaf;
         else if (catalogIndex == WORKED_ON_DATA_PAGE_INDEX) raf = workedOnDataRaf;
+        else if (catalogIndex == MOVIE_PERSON_DATA_PAGE_INDEX) raf = moviePersonDataRaf;
         else if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX) raf = movieIdIndexRaf;
         else if (catalogIndex == MOVIE_TITLE_INDEX_INDEX)raf = movieTitleRaf;
         else{
@@ -314,6 +330,8 @@ public class BufferManagerImpl extends BufferManager {
             raf = workedOnDataRaf;
         else if (catalogIndex == PEOPLE_DATA_PAGE_INDEX)
             raf = peopleDataRaf;
+        else if (catalogIndex == MOVIE_PERSON_DATA_PAGE_INDEX)
+            raf = moviePersonDataRaf;
         else if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX)
             raf = movieIdIndexRaf;
         else if (catalogIndex == MOVIE_TITLE_INDEX_INDEX)
@@ -337,7 +355,8 @@ public class BufferManagerImpl extends BufferManager {
             page = switch (catalogIndex) {
                 case MOVIES_DATA_PAGE_INDEX,
                         PEOPLE_DATA_PAGE_INDEX,
-                        WORKED_ON_DATA_PAGE_INDEX -> readDataPage(pageId, pageData, catalogIndex);
+                        WORKED_ON_DATA_PAGE_INDEX,
+                        MOVIE_PERSON_DATA_PAGE_INDEX -> readDataPage(pageId, pageData, catalogIndex);
                 case MOVIE_ID_INDEX_PAGE_INDEX,
                         MOVIE_TITLE_INDEX_INDEX -> readIndexPage(pageId, pageData, catalogIndex);
                 default -> {
@@ -387,6 +406,16 @@ public class BufferManagerImpl extends BufferManager {
                     byte[] personId = Arrays.copyOfRange(pageData, offset, offset + 10);
                     byte[] name = Arrays.copyOfRange(pageData, offset + 10, offset + 115);
                     ((PeopleDataPage) page).insertRecord(new PeopleRecord(personId, name));
+                }
+            }
+
+            case MOVIE_PERSON_DATA_PAGE_INDEX -> {
+                page = new MoviePersonDataPage(pageId);
+                for (int i = 0; i < nextRow; i++) {
+                    int offset = i * MOVIE_PERSON_ROW_SIZE;
+                    byte[] movieId = Arrays.copyOfRange(pageData, offset, offset + 9);
+                    byte[] personId = Arrays.copyOfRange(pageData, offset + 9, offset + 19);
+                    ((MoviePersonDataPage) page).insertRecord(new MoviePersonRecord(movieId, personId));
                 }
             }
 
