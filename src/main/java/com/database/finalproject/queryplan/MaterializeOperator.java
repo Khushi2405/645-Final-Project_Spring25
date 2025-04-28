@@ -4,8 +4,8 @@ import com.database.finalproject.buffermanager.BufferManagerImpl;
 import com.database.finalproject.model.page.DataPage;
 import com.database.finalproject.model.record.ParentRecord;
 
-public class MaterializeOperator<T extends ParentRecord> implements Operator {
-    private final Operator child;
+public class MaterializeOperator<T extends ParentRecord> implements Operator<T> {
+    private final Operator<T> child;
     private final BufferManagerImpl bufferManager;
     private final int catalogIndex;
     private DataPage<T> tempPage;
@@ -15,12 +15,13 @@ public class MaterializeOperator<T extends ParentRecord> implements Operator {
     private boolean isMaterialized;
     private boolean isOpen = false;
 
-    public MaterializeOperator(Operator child, BufferManagerImpl bufferManager, int catalogIndex) {
+    public MaterializeOperator(Operator<T> child, BufferManagerImpl bufferManager, int catalogIndex) {
         this.child = child;
         this.bufferManager = bufferManager;
         this.catalogIndex = catalogIndex;
 //        this.tempPages = new ArrayList<>();
-        isMaterialized = bufferManager.getTotalPages(catalogIndex) == 0;
+        isMaterialized = bufferManager.getTotalPages(catalogIndex) != 0;
+        System.out.println(isMaterialized);
         this.currentPageId = 0;
         this.currentRowId = 0;
     }
@@ -34,18 +35,21 @@ public class MaterializeOperator<T extends ParentRecord> implements Operator {
     @Override
     public T next() {
         if (!isMaterialized) {
+//            System.out.println("creating the temp table");
             // Try reading from child and materializing
             T record = (T) child.next();
             if (record == null) {
                 bufferManager.unpinPage(tempPage.getPid(), catalogIndex);
                 isMaterialized = true; // end of child
                 resetScan();
+                System.out.println("materialize complete");
                 return next();
             }
 
             writeToTemp(record);
             return record; // pipeline and materialize first
         } else {
+//            System.out.println("temp table already created");
             // After materialization, scan from temp
             while (currentPage != null) {
                 T record = currentPage.getRecord(currentRowId);
@@ -61,6 +65,8 @@ public class MaterializeOperator<T extends ParentRecord> implements Operator {
                 }
             }
             resetScan();
+
+            System.out.println("second round complete");
             return null;
         }
     }
