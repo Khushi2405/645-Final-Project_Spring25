@@ -87,11 +87,13 @@ public class BNLJoinOperator<T extends ParentRecord> implements Operator {
         unpinLeftBlock();
         DataPage<T> page = (DataPage<T>) bufferManager.createPage(joinResultType);
         while (true) {
+            System.out.println(page.getPid());
             while (!page.isFull()) {
                 T record = (T) leftChild.next();
-                page.insertRecord(record);
-                if (record == null)
+                if (record == null) {
                     break;
+                }
+                page.insertRecord(record);
                 String key = record.getFieldByIndex(joinAttrLeft);
                 hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(record);
             }

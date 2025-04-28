@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-
 import static com.database.finalproject.constants.PageConstants.*;
 
 @Component
@@ -43,24 +42,23 @@ public class BufferManagerImpl extends BufferManager {
         tailBufferPool = null;
         headBufferPool = null;
 
-
         try {
             movieDataRaf = new RandomAccessFile(catalog.getCatalog(MOVIES_DATA_PAGE_INDEX).get("filename"), "rw");
-//            System.out.println(dataRaf.length()/PAGE_SIZE);
+            // System.out.println(dataRaf.length()/PAGE_SIZE);
         } catch (IOException e) {
             System.out.println("Error in RAF, file cannot be created");
             throw new RuntimeException(e);
         }
         try {
             peopleDataRaf = new RandomAccessFile(catalog.getCatalog(PEOPLE_DATA_PAGE_INDEX).get("filename"), "rw");
-//            System.out.println(dataRaf.length()/PAGE_SIZE);
+            // System.out.println(dataRaf.length()/PAGE_SIZE);
         } catch (IOException e) {
             System.out.println("Error in RAF, file cannot be created");
             throw new RuntimeException(e);
         }
         try {
             workedOnDataRaf = new RandomAccessFile(catalog.getCatalog(WORKED_ON_DATA_PAGE_INDEX).get("filename"), "rw");
-//            System.out.println(dataRaf.length()/PAGE_SIZE);
+            // System.out.println(dataRaf.length()/PAGE_SIZE);
         } catch (IOException e) {
             System.out.println("Error in RAF, file cannot be created");
             throw new RuntimeException(e);
@@ -80,12 +78,13 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public Page getPage(int pageId, int ...index) {
+    public Page getPage(int pageId, int... index) {
         // Logic to fetch a page from buffer
         incrementIO();
         int catalogIndex = getCatalogIndex(index);
         Pair<Integer, Integer> pair = new Pair(pageId, catalogIndex);
-        // if page id already in buffer then move it to front and increment the pin counter
+        // if page id already in buffer then move it to front and increment the pin
+        // counter
         if (pageHash.containsKey(pair)) {
             DLLNode currNode = pageHash.get(pair);
             bringPageFront(currNode);
@@ -120,7 +119,7 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public Page createPage(int ...index) {
+    public Page createPage(int... index) {
         // Logic to create a new page
 
         incrementIO();
@@ -133,33 +132,24 @@ public class BufferManagerImpl extends BufferManager {
                 return null;
             }
         }
-        int pageCount;
-        if (catalogIndex == -1) {
-            pageCount = movieWorksOnBlockPageCount;
-        } else if (catalogIndex == -2) {
-            pageCount = movieWorksOnPeopleBlockPageCount;
-        } else {
+        int pageCount = 0;
+        if (catalogIndex >= 0)
             pageCount = Integer.parseInt(catalog.getCatalog(catalogIndex).get("totalPages"));
-        }
         Page page;
-        if(catalogIndex == MOVIES_DATA_PAGE_INDEX) {
+        if (catalogIndex == MOVIES_DATA_PAGE_INDEX) {
             page = new MovieDataPage(pageCount++);
-        }
-        else if(catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX){
+        } else if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX) {
             page = new IndexPage(pageCount++, MOVIE_ID_INDEX_PAGE_INDEX);
-        }
-        else if(catalogIndex == MOVIE_TITLE_INDEX_INDEX){
+        } else if (catalogIndex == MOVIE_TITLE_INDEX_INDEX) {
             page = new IndexPage(pageCount++, MOVIE_TITLE_INDEX_INDEX);
-        }
-        else if(catalogIndex == WORKED_ON_DATA_PAGE_INDEX){
+        } else if (catalogIndex == WORKED_ON_DATA_PAGE_INDEX) {
             page = new WorkedOnDataPage(pageCount++);
-        }
-        else if(catalogIndex == PEOPLE_DATA_PAGE_INDEX){
+        } else if (catalogIndex == PEOPLE_DATA_PAGE_INDEX) {
             page = new PeopleDataPage(pageCount++);
         } else if (catalogIndex == BNL_MOVIE_WORKED_ON_INDEX) {
-            page = new MovieDataPage(pageCount++);
+            page = new MovieDataPage(movieWorksOnBlockPageCount++);
         } else if (catalogIndex == BNL_MOVIE_WORKED_ON_PEOPLE_INDEX) {
-            page = new MoviesWorkedOnJoinPage(pageCount++);
+            page = new MoviesWorkedOnJoinPage(movieWorksOnPeopleBlockPageCount++);
         } else {
             logger.error("Incorrect index for page");
             return null;
@@ -175,7 +165,7 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public void markDirty(int pageId, int ...index) {
+    public void markDirty(int pageId, int... index) {
         // Mark page as dirty
 
         int catalogIndex = getCatalogIndex(index);
@@ -189,7 +179,7 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public void unpinPage(int pageId, int ...index) {
+    public void unpinPage(int pageId, int... index) {
         // Unpin page
         int catalogIndex = getCatalogIndex(index);
         Pair<Integer, Integer> pair = new Pair<>(pageId, catalogIndex);
@@ -201,18 +191,23 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public void writeToBinaryFile(Page page, int ...index) {
+    public void writeToBinaryFile(Page page, int... index) {
         int catalogIndex = getCatalogIndex(index);
         if (catalogIndex < 0) {
             return;
         }
         RandomAccessFile raf;
-        if (catalogIndex == MOVIES_DATA_PAGE_INDEX) raf = movieDataRaf;
-        else if (catalogIndex == PEOPLE_DATA_PAGE_INDEX) raf = peopleDataRaf;
-        else if (catalogIndex == WORKED_ON_DATA_PAGE_INDEX) raf = workedOnDataRaf;
-        else if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX) raf = movieIdIndexRaf;
-        else if (catalogIndex == MOVIE_TITLE_INDEX_INDEX)raf = movieTitleRaf;
-        else{
+        if (catalogIndex == MOVIES_DATA_PAGE_INDEX)
+            raf = movieDataRaf;
+        else if (catalogIndex == PEOPLE_DATA_PAGE_INDEX)
+            raf = peopleDataRaf;
+        else if (catalogIndex == WORKED_ON_DATA_PAGE_INDEX)
+            raf = workedOnDataRaf;
+        else if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX)
+            raf = movieIdIndexRaf;
+        else if (catalogIndex == MOVIE_TITLE_INDEX_INDEX)
+            raf = movieTitleRaf;
+        else {
             logger.error("Invalid index");
             return;
         }
@@ -235,8 +230,8 @@ public class BufferManagerImpl extends BufferManager {
 
     @Override
     public void force() {
-        while(headBufferPool != null){
-            if(headBufferPool.isDirty) {
+        while (headBufferPool != null) {
+            if (headBufferPool.isDirty) {
                 writeToBinaryFile(headBufferPool.page, headBufferPool.index);
             }
             headBufferPool = headBufferPool.next;
@@ -247,7 +242,7 @@ public class BufferManagerImpl extends BufferManager {
     }
 
     @Override
-    public String getRootPageId(int ...index){
+    public String getRootPageId(int... index) {
         int catalogIndex = getCatalogIndex(index);
         return catalog.getCatalog(catalogIndex).get(DATABASE_CATALOGUE_KEY_ROOT_PAGE);
     }
@@ -320,7 +315,7 @@ public class BufferManagerImpl extends BufferManager {
             raf = movieIdIndexRaf;
         else if (catalogIndex == MOVIE_TITLE_INDEX_INDEX)
             raf = movieTitleRaf;
-        else{
+        else {
             logger.error("Invalid index");
             return null;
         }
@@ -339,9 +334,11 @@ public class BufferManagerImpl extends BufferManager {
             page = switch (catalogIndex) {
                 case MOVIES_DATA_PAGE_INDEX,
                         PEOPLE_DATA_PAGE_INDEX,
-                        WORKED_ON_DATA_PAGE_INDEX -> readDataPage(pageId, pageData, catalogIndex);
+                        WORKED_ON_DATA_PAGE_INDEX ->
+                    readDataPage(pageId, pageData, catalogIndex);
                 case MOVIE_ID_INDEX_PAGE_INDEX,
-                        MOVIE_TITLE_INDEX_INDEX -> readIndexPage(pageId, pageData, catalogIndex);
+                        MOVIE_TITLE_INDEX_INDEX ->
+                    readIndexPage(pageId, pageData, catalogIndex);
                 default -> {
                     logger.error("Invalid index for reading page");
                     yield null;
@@ -416,7 +413,7 @@ public class BufferManagerImpl extends BufferManager {
 
     private boolean removeLRUNode() {
         DLLNode unpinnedNode = tailBufferPool;
-        if(unpinnedNode == headBufferPool){
+        if (unpinnedNode == headBufferPool) {
             headBufferPool = null;
             tailBufferPool = null;
             pageHash.clear();
@@ -464,10 +461,12 @@ public class BufferManagerImpl extends BufferManager {
         currNode.pinCount++;
     }
 
-    private int getCatalogIndex(int ...index){
+    private int getCatalogIndex(int... index) {
         int catalogIndex;
-        if(index.length == 0) return -1;
-        else catalogIndex = index[0];
+        if (index.length == 0)
+            return -1;
+        else
+            catalogIndex = index[0];
         return catalogIndex;
     }
 
