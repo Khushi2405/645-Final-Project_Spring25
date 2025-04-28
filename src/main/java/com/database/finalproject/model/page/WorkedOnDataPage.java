@@ -38,11 +38,11 @@ public class WorkedOnDataPage extends DataPage<WorkedOnRecord> {
 
     public int insertRecord(WorkedOnRecord workedOnRecord) {
         int nextRow = binaryToDecimal(pageArray[PAGE_SIZE - 1]);
-        int offset = nextRow * WORKED_ON_ROW_SIZE;
-        if (offset == 4025) {
+        if (nextRow == WORKED_ON_PAGE_ROW_LIMIT) {
             System.out.println("No space available to store more rows.");
             return -1; // Not enough space
         }
+        int offset = nextRow * WORKED_ON_ROW_SIZE;
         System.arraycopy(workedOnRecord.movieId(), 0, pageArray, offset, 9);
         System.arraycopy(workedOnRecord.personId(), 0, pageArray, offset + 9, 10);
         System.arraycopy(workedOnRecord.category(), 0, pageArray, offset + 19, 20);

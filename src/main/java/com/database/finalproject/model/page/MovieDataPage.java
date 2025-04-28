@@ -40,11 +40,11 @@ public class MovieDataPage extends DataPage<MovieRecord> {
 
     public int insertRecord(MovieRecord movieRecord) {
         int nextRow = binaryToDecimal(pageArray[PAGE_SIZE - 1]);
-        int offset = nextRow * 39;
-        if (offset == 4095) {
-//            System.out.println("No space available to store more rows.");
+        if (nextRow == MOVIE_PAGE_ROW_LIMIT) {
+            System.out.println("No space available to store more rows.");
             return -1; // Not enough space
         }
+        int offset = nextRow * 39;
         System.arraycopy(movieRecord.movieId(), 0, pageArray, offset, 9);
         System.arraycopy(movieRecord.movieTitle(), 0, pageArray, offset + 9, 30);
         pageArray[PAGE_SIZE - 1] = decimalToBinary(nextRow + 1);
