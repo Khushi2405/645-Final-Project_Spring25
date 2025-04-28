@@ -1,20 +1,19 @@
 package com.database.finalproject.queryplan;
 
 import com.database.finalproject.model.Comparator;
+import com.database.finalproject.model.SelectionPredicate;
 import com.database.finalproject.model.record.ParentRecord;
 
-public class SelectionOperator<T extends ParentRecord> implements Operator {
+import java.util.List;
 
-    private final Operator childOperator;
-    private final int attributeIndex;
-    private final String valueToCompare;
-    private final Comparator comparator;
+public class SelectionOperator<T extends ParentRecord> implements Operator<T> {
 
-    public SelectionOperator(Operator childOperator, int attributeIndex, String valueToCompare, Comparator comparator) {
+    private final Operator<T> childOperator;
+    private final List<SelectionPredicate> predicates;
+
+    public SelectionOperator(Operator<T> childOperator, List<SelectionPredicate> predicates) {
         this.childOperator = childOperator;
-        this.attributeIndex = attributeIndex;
-        this.valueToCompare = valueToCompare;
-        this.comparator = comparator;
+        this.predicates = predicates;
     }
 
     @Override
@@ -26,8 +25,7 @@ public class SelectionOperator<T extends ParentRecord> implements Operator {
     public T next() {
         T record;
         while ((record = (T) childOperator.next()) != null) {
-            String fieldValue = record.getFieldByIndex(attributeIndex);
-            if (compare(fieldValue, valueToCompare)) {
+            if (matchesAllPredicates(record)) {
                 return record;
             }
         }
@@ -39,7 +37,17 @@ public class SelectionOperator<T extends ParentRecord> implements Operator {
         childOperator.close();
     }
 
-    private boolean compare(String fieldValue, String valueToCompare) {
+    private boolean matchesAllPredicates(T record) {
+        for (SelectionPredicate predicate : predicates) {
+            String fieldValue = record.getFieldByIndex(predicate.attributeIndex());
+            if (!compare(fieldValue, predicate.valueToCompare(), predicate.comparator())) {
+                return false; // fail even one predicate
+            }
+        }
+        return true;
+    }
+
+    private boolean compare(String fieldValue, String valueToCompare, Comparator comparator) {
         int cmp = fieldValue.compareTo(valueToCompare);
 
         return switch (comparator) {

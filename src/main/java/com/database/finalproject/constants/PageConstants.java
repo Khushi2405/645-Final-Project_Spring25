@@ -10,7 +10,7 @@ public class PageConstants {
     public static final int WORKED_ON_ROW_SIZE = 39; // 9 bytes for movieId + 10 bytes for personId + 20 bytes for category
     public static final int MOVIE_WORKED_ON_JOIN_ROW_SIZE = 49; // 9 bytes for movieId + 10 bytes for personId + 30 bytes for title
     public static final int MOVIE_WORKED_ON_PEOPLE_JOIN_ROW_SIZE = 135; // 9 bytes for movieId + 10 bytes for personId + 20 bytes for category
-    public static final int MOVIE_PERSON_ROW_SIZE = 19; // 9 bytes for movieId + 10 bytes for personId + 20 bytes for category
+    public static final int MOVIE_PERSON_ROW_SIZE = 19; // 9 bytes for movieId + 10 bytes for personId
     public static final int MOVIE_PAGE_ROW_LIMIT = PAGE_SIZE / MOVIE_ROW_SIZE;
     public static final int PEOPLE_PAGE_ROW_LIMIT = PAGE_SIZE / PEOPLE_ROW_SIZE;
     public static final int WORKED_ON_PAGE_ROW_LIMIT = PAGE_SIZE / WORKED_ON_ROW_SIZE;
@@ -33,6 +33,7 @@ public class PageConstants {
     public static final int MOVIES_DATA_PAGE_INDEX = 0;
     public static final int WORKED_ON_DATA_PAGE_INDEX = 3;
     public static final int PEOPLE_DATA_PAGE_INDEX = 4;
+    public static final int MOVIE_PERSON_DATA_PAGE_INDEX = 5;
     public static final int MOVIE_ID_INDEX_PAGE_INDEX = 1;
     public static final int MOVIE_TITLE_INDEX_INDEX = 2;
     public static final int BNL_MOVIE_WORKED_ON_INDEX = -1;

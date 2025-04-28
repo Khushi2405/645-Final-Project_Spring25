@@ -6,12 +6,12 @@ import com.database.finalproject.model.record.ParentRecord;
 import com.database.finalproject.model.record.TitleNameRecord;
 
 
-public class ProjectionOperator<T extends ParentRecord> implements Operator {
-    private final Operator child;
+public class ProjectionOperator<I extends ParentRecord, O extends ParentRecord> implements Operator<O> {
+    private final Operator<I> child;
     private final ProjectionType projectionType;
     private boolean isOpen = false;
 
-    public ProjectionOperator(Operator child, ProjectionType projectionType) {
+    public ProjectionOperator(Operator<I> child, ProjectionType projectionType) {
         this.child = child;
         this.projectionType = projectionType;
     }
@@ -23,11 +23,11 @@ public class ProjectionOperator<T extends ParentRecord> implements Operator {
     }
 
     @Override
-    public T next() {
-        ParentRecord record = (ParentRecord) child.next();
+    public O next() {
+        I record = child.next();
         if (record == null) return null;
 
-        return (T) switch (projectionType) {
+        return (O) switch (projectionType) {
             case PROJECTION_ON_WORKED_ON -> {
                 byte[] movieId = record.getFieldByIndex(0).getBytes();
                 byte[] personId = record.getFieldByIndex(1).getBytes();

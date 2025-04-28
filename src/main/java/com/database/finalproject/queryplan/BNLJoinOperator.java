@@ -15,9 +15,9 @@ import static com.database.finalproject.constants.PageConstants.BNL_MOVIE_WORKED
 
 import java.util.*;
 
-public class BNLJoinOperator<T extends ParentRecord> implements Operator {
-    private final Operator leftChild;
-    private final Operator rightChild;
+public class BNLJoinOperator<T extends ParentRecord> implements Operator<T> {
+    private final Operator<T> leftChild;
+    private final Operator<T> rightChild;
     private final int joinAttrLeft;
     private final int joinAttrRight;
     private final int blockSize;
@@ -28,7 +28,7 @@ public class BNLJoinOperator<T extends ParentRecord> implements Operator {
     private Iterator<T> outerMatchesIterator;
     private T currentRightRecord;
 
-    public BNLJoinOperator(Operator leftChild, Operator rightChild, int joinAttrLeft, int joinAttrRight, int blockSize,
+    public BNLJoinOperator(Operator<T> leftChild, Operator<T> rightChild, int joinAttrLeft, int joinAttrRight, int blockSize,
             BufferManagerImpl bf, int joinResultType) {
         this.leftChild = leftChild;
         this.rightChild = rightChild;

@@ -6,7 +6,7 @@ import com.database.finalproject.model.page.DataPage;
 import com.database.finalproject.model.page.Page;
 import com.database.finalproject.model.record.ParentRecord;
 
-public class ScanOperator<T extends ParentRecord> implements Operator {
+public class ScanOperator<T extends ParentRecord> implements Operator<T> {
     private final BufferManagerImpl bufferManager;
     private final int catalogIndex; // e.g., MOVIES_DATA_PAGE_INDEX
     private int currentPageId;

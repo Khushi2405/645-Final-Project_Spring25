@@ -37,11 +37,11 @@ public class PeopleDataPage extends DataPage<PeopleRecord> {
 
     public int insertRecord(PeopleRecord peopleRecord) {
         int nextRow = binaryToDecimal(pageArray[PAGE_SIZE - 1]);
-        int offset = nextRow * PEOPLE_ROW_SIZE;
-        if (offset == 4095) {
-//            System.out.println("No space available to store more rows.");
+        if (nextRow == PEOPLE_PAGE_ROW_LIMIT) {
+            System.out.println("No space available to store more rows.");
             return -1; // Not enough space
         }
+        int offset = nextRow * PEOPLE_ROW_SIZE;
         System.arraycopy(peopleRecord.personId(), 0, pageArray, offset, 10);
         System.arraycopy(peopleRecord.name(), 0, pageArray, offset + 10, 105);
         pageArray[PAGE_SIZE - 1] = decimalToBinary(nextRow + 1);

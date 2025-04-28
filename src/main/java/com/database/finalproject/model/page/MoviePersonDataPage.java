@@ -1,17 +1,18 @@
 package com.database.finalproject.model.page;
+import com.database.finalproject.model.record.MoviePersonRecord;
 import com.database.finalproject.model.record.WorkedOnRecord;
 
 import java.util.Arrays;
 
 import static com.database.finalproject.constants.PageConstants.*;
 
-public class WorkedOnDataPage extends DataPage<WorkedOnRecord> {
+public class MoviePersonDataPage extends DataPage<MoviePersonRecord> {
 
     //    private final byte[] rows;
     private byte[] pageArray = new byte[PAGE_SIZE];
     private final int pageId;
 
-    public WorkedOnDataPage(int pageId) {
+    public MoviePersonDataPage(int pageId) {
         this.pageId = pageId;
     }
 
@@ -21,31 +22,29 @@ public class WorkedOnDataPage extends DataPage<WorkedOnRecord> {
     }
 
 
-    public WorkedOnRecord getRecord(int rowId) {
+    public MoviePersonRecord getRecord(int rowId) {
         int totalRows = binaryToDecimal(pageArray[PAGE_SIZE - 1]);
         if (rowId >= totalRows || rowId < 0) {
 //            System.out.println("WorkedOnRecord out of bounds");
             return null;
         }
 
-        int offset = rowId * WORKED_ON_ROW_SIZE;
+        int offset = rowId * MOVIE_PERSON_ROW_SIZE;
         byte[] movieId = Arrays.copyOfRange(pageArray, offset, offset + 9);
         byte[] personId = Arrays.copyOfRange(pageArray, offset + 9, offset + 19);
-        byte[] category = Arrays.copyOfRange(pageArray, offset + 19, offset + 39);
-        return new WorkedOnRecord(movieId, personId, category);
+        return new MoviePersonRecord(movieId, personId);
     }
 
 
-    public int insertRecord(WorkedOnRecord workedOnRecord) {
+    public int insertRecord(MoviePersonRecord moviePersonRecord) {
         int nextRow = binaryToDecimal(pageArray[PAGE_SIZE - 1]);
-        if (nextRow == WORKED_ON_PAGE_ROW_LIMIT) {
+        if (nextRow == MOVIE_PERSON_ROW_LIMIT) {
             System.out.println("No space available to store more rows.");
             return -1; // Not enough space
         }
-        int offset = nextRow * WORKED_ON_ROW_SIZE;
-        System.arraycopy(workedOnRecord.movieId(), 0, pageArray, offset, 9);
-        System.arraycopy(workedOnRecord.personId(), 0, pageArray, offset + 9, 10);
-        System.arraycopy(workedOnRecord.category(), 0, pageArray, offset + 19, 20);
+        int offset = nextRow * MOVIE_PERSON_ROW_SIZE;
+        System.arraycopy(moviePersonRecord.movieId(), 0, pageArray, offset, 9);
+        System.arraycopy(moviePersonRecord.personId(), 0, pageArray, offset + 9, 10);
         pageArray[PAGE_SIZE - 1] = decimalToBinary(nextRow + 1);
         return nextRow;
 
@@ -53,7 +52,7 @@ public class WorkedOnDataPage extends DataPage<WorkedOnRecord> {
 
 
     public boolean isFull() {
-        return binaryToDecimal(pageArray[PAGE_SIZE - 1]) == WORKED_ON_PAGE_ROW_LIMIT;
+        return binaryToDecimal(pageArray[PAGE_SIZE - 1]) == MOVIE_PERSON_ROW_LIMIT;
     }
 
     @Override
