@@ -509,6 +509,10 @@ public class BufferManagerImpl extends BufferManager {
         ioCount++;
     }
 
+    public void resetMaterializedTable() {
+        catalog.setCatalog(MOVIE_PERSON_DATA_PAGE_INDEX, DATABASE_CATALOGUE_KEY_TOTAL_PAGES, String.valueOf(0));
+    }
+
     public void printList() {
         DLLNode node = headBufferPool;
         while (node != null) {
