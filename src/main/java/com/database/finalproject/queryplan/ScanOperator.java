@@ -8,7 +8,7 @@ import com.database.finalproject.model.record.ParentRecord;
 
 public class ScanOperator<T extends ParentRecord> implements Operator<T> {
     private final BufferManagerImpl bufferManager;
-    private final int catalogIndex; // e.g., MOVIES_DATA_PAGE_INDEX
+    private final int catalogIndex;
     private int currentPageId;
     private int currentRowId;
     private DataPage<T> currentPage;
