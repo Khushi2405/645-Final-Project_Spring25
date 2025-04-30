@@ -169,6 +169,12 @@ public class BufferManagerImpl extends BufferManager {
         if (catalogIndex >= 0) {
             catalog.setCatalog(catalogIndex, DATABASE_CATALOGUE_KEY_TOTAL_PAGES, String.valueOf(pageCount));
         }
+        else if(catalogIndex == -1){
+            movieWorksOnBlockPageCount++;
+        }
+        else if(catalogIndex == -2){
+            movieWorksOnPeopleBlockPageCount++;
+        }
         DLLNode currNode = new DLLNode(page, catalogIndex);
         addNewPage(new Pair<>(page.getPid(), catalogIndex), currNode);
         if (catalogIndex >= 0)

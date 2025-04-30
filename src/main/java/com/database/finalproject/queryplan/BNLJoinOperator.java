@@ -9,8 +9,7 @@ import static com.database.finalproject.constants.PageConstants.BNL_MOVIE_WORKED
 
 import java.util.*;
 
-public class BNLJoinOperator<L extends ParentRecord, R extends ParentRecord, O extends ParentRecord>
-        implements Operator<O> {
+public class BNLJoinOperator<L extends ParentRecord, R extends ParentRecord, O extends ParentRecord> implements Operator<O> {
     private final Operator<L> leftChild;
     private final Operator<R> rightChild;
     private final int joinAttrLeft;
@@ -24,8 +23,8 @@ public class BNLJoinOperator<L extends ParentRecord, R extends ParentRecord, O e
     private R currentRightRecord;
     private int previousBlockPages;
 
-    public BNLJoinOperator(Operator<L> leftChild, Operator<R> rightChild, int joinAttrLeft, int joinAttrRight,
-            int blockSize,
+
+    public BNLJoinOperator(Operator<L> leftChild, Operator<R> rightChild, int joinAttrLeft, int joinAttrRight, int blockSize,
             BufferManagerImpl bf, int joinResultType) {
         this.leftChild = leftChild;
         this.rightChild = rightChild;
@@ -58,10 +57,11 @@ public class BNLJoinOperator<L extends ParentRecord, R extends ParentRecord, O e
                 if (!loadNextLeftBlock()) {
                     return null; // All data processed
                 }
-                currentRightRecord = rightChild.next();
-                if (currentRightRecord == null) {
-                    return null; // No more right-side data
-                }
+                continue;
+//                currentRightRecord = rightChild.next();
+//                if (currentRightRecord == null) {
+//                    return null; // No more right-side data
+//                }
             }
 
             String key = currentRightRecord.getFieldByIndex(joinAttrRight);
@@ -80,25 +80,27 @@ public class BNLJoinOperator<L extends ParentRecord, R extends ParentRecord, O e
     private boolean loadNextLeftBlock() {
         hashTable.clear();
         // TODO: close or reset scan???
-        // rightChild.close();
-        // rightChild.open();
-
+        rightChild.close();
+        rightChild.open();
+//        System.out.println("LoadBlock called for " + joinResultType);
         unpinLeftBlock();
         int pagesLoaded = 0;
+        boolean endOfFile = false;
         DataPage<L> page = (DataPage<L>) bufferManager.createPage(joinResultType);
         while (true) {
-            System.out.println(page.getPid());
             while (!page.isFull()) {
                 L record = leftChild.next();
-                if (record == null)
+                if(record == null) {
+                    endOfFile = true;
                     break;
+                }
                 page.insertRecord(record);
                 String key = record.getFieldByIndex(joinAttrLeft);
                 hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(record);
             }
             pagesLoaded++;
 
-            if (pagesLoaded == blockSize) {
+            if (pagesLoaded == blockSize || endOfFile) {
                 break;
             }
             page = (DataPage<L>) bufferManager.createPage(joinResultType);

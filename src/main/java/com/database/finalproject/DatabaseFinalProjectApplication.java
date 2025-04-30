@@ -254,11 +254,11 @@ public class DatabaseFinalProjectApplication {
 
 		TitleNameRecord output;
 		while ((output = finalProjection.next()) != null) {
-			String title = new String(output.movieTitle()).trim();
-			String name = new String(output.personName()).trim();
+			String title = new String(removeTrailingBytes(output.movieTitle())).trim();
+			String name = new String(removeTrailingBytes(output.personName())).trim();
 
 			// Print to console
-			System.out.println(title + "," + name);
+//			System.out.println(title + "," + name);
 
 			// Write to Excel
 			Row row = sheet.createRow(rowNum++);
@@ -269,7 +269,7 @@ public class DatabaseFinalProjectApplication {
 		finalProjection.close();
 
 		// Write Excel file
-		try (FileOutputStream fileOut = new FileOutputStream("query_output.xlsx")) {
+		try (FileOutputStream fileOut = new FileOutputStream("src/main/resources/static/query_output.xlsx")) {
 			workbook.write(fileOut);
 			workbook.close();
 		} catch (IOException e) {

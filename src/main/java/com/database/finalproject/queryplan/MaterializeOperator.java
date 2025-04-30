@@ -30,6 +30,7 @@ public class MaterializeOperator<T extends ParentRecord> implements Operator<T> 
     public void open() {
         child.open();
         isOpen = true;
+        if(isMaterialized) currentPage = (DataPage<T>)(bufferManager.getPage(currentPageId, catalogIndex));
     }
 
     @Override
