@@ -57,10 +57,11 @@ public class BNLJoinOperator<L extends ParentRecord, R extends ParentRecord, O e
                 if (!loadNextLeftBlock()) {
                     return null; // All data processed
                 }
-                currentRightRecord = rightChild.next();
-                if (currentRightRecord == null) {
-                    return null; // No more right-side data
-                }
+                continue;
+//                currentRightRecord = rightChild.next();
+//                if (currentRightRecord == null) {
+//                    return null; // No more right-side data
+//                }
             }
 
             String key = currentRightRecord.getFieldByIndex(joinAttrRight);
@@ -81,21 +82,25 @@ public class BNLJoinOperator<L extends ParentRecord, R extends ParentRecord, O e
         // TODO: close or reset scan???
         rightChild.close();
         rightChild.open();
-
+//        System.out.println("LoadBlock called for " + joinResultType);
         unpinLeftBlock();
         int pagesLoaded = 0;
+        boolean endOfFile = false;
         DataPage<L> page = (DataPage<L>) bufferManager.createPage(joinResultType);
         while (true) {
             while (!page.isFull()) {
                 L record = leftChild.next();
-                if(record == null) break;
+                if(record == null) {
+                    endOfFile = true;
+                    break;
+                }
                 page.insertRecord(record);
                 String key = record.getFieldByIndex(joinAttrLeft);
                 hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(record);
             }
             pagesLoaded++;
 
-            if (pagesLoaded == blockSize) {
+            if (pagesLoaded == blockSize || endOfFile) {
                 break;
             }
             page = (DataPage<L>) bufferManager.createPage(joinResultType);
