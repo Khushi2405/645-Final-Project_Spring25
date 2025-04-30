@@ -1,12 +1,11 @@
 package com.database.finalproject.model.record;
 
-import static com.database.finalproject.constants.PageConstants.removeTrailingBytes;
-import static com.database.finalproject.constants.PageConstants.truncateOrPadByteArray;
+import static com.database.finalproject.constants.PageConstants.*;
 
 public record MoviePersonRecord(byte[] movieId, byte[] personId) implements ParentRecord {
     public MoviePersonRecord {
-        movieId = truncateOrPadByteArray(movieId, 9);
-        personId = truncateOrPadByteArray(personId, 10);
+        movieId = truncateOrPadByteArray(movieId, MOVIE_ID_SIZE);
+        personId = truncateOrPadByteArray(personId, PERSON_ID_SIZE);
     }
 
 

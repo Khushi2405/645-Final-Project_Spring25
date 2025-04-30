@@ -190,8 +190,8 @@ public class UserController {
 
 		TitleNameRecord output;
 		while ((output = finalProjection.next()) != null) {
-			String title = new String(removeTrailingBytes(output.movieTitle())).trim();
-			String name = new String(removeTrailingBytes(output.personName())).trim();
+			String title = new String(removeTrailingBytes(output.title())).trim();
+			String name = new String(removeTrailingBytes(output.name())).trim();
 
 			// Print to console uncomment if want to print on command line
 //			System.out.println(title + "," + name);
