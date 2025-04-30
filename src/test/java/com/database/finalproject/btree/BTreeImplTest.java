@@ -1,10 +1,9 @@
 package com.database.finalproject.btree;
 
 import com.database.finalproject.buffermanager.*;
-import com.database.finalproject.model.IndexPage;
+import com.database.finalproject.model.page.IndexPage;
 import com.database.finalproject.model.Rid;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 
 import static com.database.finalproject.constants.PageConstants.*;
@@ -14,12 +13,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
-
-import java.util.List;
 
 class BTreeImplTest {
     

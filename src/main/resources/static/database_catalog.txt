@@ -1,3 +1,6 @@
-src/main/resources/static/data_binary_heap.bin,56496,0
+src/main/resources/static/movie_data_binary_heap.bin,53648,0
 src/main/resources/static/movie_id_index.bin,7287,317
 src/main/resources/static/movie_title_index.bin,13539,10193
+src/main/resources/static/worked_on_data_binary_heap.bin,486105,0
+src/main/resources/static/people_data_binary_heap.bin,410238,0
+src/main/resources/static/projected_worked_on_data_binary_heap.bin,3391,0

@@ -1,10 +1,9 @@
 package com.database.finalproject.btree;
 
 import com.database.finalproject.buffermanager.BufferManager;
-import com.database.finalproject.model.IndexPage;
+import com.database.finalproject.model.page.IndexPage;
 import com.database.finalproject.model.Rid;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.database.finalproject.constants.PageConstants.*;
@@ -261,9 +260,9 @@ public class BTreeImpl implements BTree<String, Rid> {
             for (byte[] key : nodePage.keys) {
                 countRecords++;
                 String curr = new String(removeTrailingBytes(key)).trim();
-                if (prev.compareTo(curr) > 0) {
-                    System.out.println(prev + " " + curr);
-                }
+//                if (prev.compareTo(curr) > 0) {
+//                    System.out.println(prev + " " + curr);
+//                }
                 prev = curr;
             }
 

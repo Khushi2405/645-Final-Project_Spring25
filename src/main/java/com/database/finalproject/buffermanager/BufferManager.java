@@ -1,6 +1,6 @@
 package com.database.finalproject.buffermanager;
 
-import com.database.finalproject.model.Page;
+import com.database.finalproject.model.page.Page;
 
 public abstract class BufferManager {
     final int bufferSize;
@@ -25,4 +25,5 @@ public abstract class BufferManager {
 
     public abstract void setRootPageId(int rootPageId, int ...index);
     public abstract String getFilePath(int index);
+    public abstract int getTotalPages(int index);
 }

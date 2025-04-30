@@ -1,4 +1,6 @@
-package com.database.finalproject.model;
+package com.database.finalproject.model.page;
+
+import com.database.finalproject.model.page.Page;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -6,7 +8,7 @@ import java.util.List;
 
 import static com.database.finalproject.constants.PageConstants.*;
 
-public class IndexPage implements Page{
+public class IndexPage implements Page {
     private byte[] pageArray = new byte[PAGE_SIZE];
     private final int pageId;
     boolean isLeaf;

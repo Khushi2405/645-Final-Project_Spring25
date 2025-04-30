@@ -1,5 +1,7 @@
 package com.database.finalproject.model;
 
+import com.database.finalproject.model.page.Page;
+
 public class DLLNode {
     public Page page;
     public DLLNode next;
