@@ -351,7 +351,6 @@ public class BufferManagerImpl extends BufferManager {
         try {
             long offset = (long) (pageId) * PAGE_SIZE;
             if (raf.length() <= offset) {
-                logger.error("Page not found: {}", pageId);
                 return null;
             }
             raf.seek(offset);

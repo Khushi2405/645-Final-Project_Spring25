@@ -19,9 +19,7 @@ public class MaterializeOperator<T extends ParentRecord> implements Operator<T> 
         this.child = child;
         this.bufferManager = bufferManager;
         this.catalogIndex = catalogIndex;
-//        this.tempPages = new ArrayList<>();
         isMaterialized = bufferManager.getTotalPages(catalogIndex) != 0;
-        System.out.println(isMaterialized);
         this.currentPageId = 0;
         this.currentRowId = 0;
     }
@@ -43,7 +41,6 @@ public class MaterializeOperator<T extends ParentRecord> implements Operator<T> 
                 bufferManager.unpinPage(tempPage.getPid(), catalogIndex);
                 isMaterialized = true; // end of child
                 resetScan();
-                System.out.println("materialize complete");
                 return next();
             }
 
@@ -66,8 +63,6 @@ public class MaterializeOperator<T extends ParentRecord> implements Operator<T> 
                 }
             }
             resetScan();
-
-            System.out.println("second round complete");
             return null;
         }
     }
