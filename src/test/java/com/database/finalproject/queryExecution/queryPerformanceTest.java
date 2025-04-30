@@ -3,17 +3,23 @@ package com.database.finalproject.queryExecution;
 import static com.database.finalproject.constants.PageConstants.BNL_MOVIE_WORKED_ON_INDEX;
 import static com.database.finalproject.constants.PageConstants.BNL_MOVIE_WORKED_ON_PEOPLE_INDEX;
 import static com.database.finalproject.constants.PageConstants.MOVIES_DATA_PAGE_INDEX;
+import static com.database.finalproject.constants.PageConstants.MOVIE_PERSON_DATA_PAGE_INDEX;
 import static com.database.finalproject.constants.PageConstants.PEOPLE_DATA_PAGE_INDEX;
 import static com.database.finalproject.constants.PageConstants.SAMPLE_RANGES_CSV;
 import static com.database.finalproject.constants.PageConstants.WORKED_ON_DATA_PAGE_INDEX;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
@@ -27,6 +33,13 @@ import com.database.finalproject.buffermanager.BufferManagerImpl;
 import com.database.finalproject.model.Comparator;
 import com.database.finalproject.model.ProjectionType;
 import com.database.finalproject.model.SelectionPredicate;
+import com.database.finalproject.model.record.MoviePersonRecord;
+import com.database.finalproject.model.record.MovieRecord;
+import com.database.finalproject.model.record.MovieWorkedOnJoinRecord;
+import com.database.finalproject.model.record.MovieWorkedOnPeopleJoinRecord;
+import com.database.finalproject.model.record.PeopleRecord;
+import com.database.finalproject.model.record.TitleNameRecord;
+import com.database.finalproject.model.record.WorkedOnRecord;
 import com.database.finalproject.queryplan.BNLJoinOperator;
 import com.database.finalproject.queryplan.MaterializeOperator;
 import com.database.finalproject.queryplan.ProjectionOperator;
@@ -35,10 +48,10 @@ import com.database.finalproject.queryplan.SelectionOperator;
 
 public class queryPerformanceTest {
     @BeforeAll
-    void setup() {
+    static void setup() {
         // Note: Please update the database_catalogue.txt to make the number of pages of
         // the respective table to 0 before running this.
-        // BufferManagerImpl bufferManager = new BufferManagerImpl(100);
+        // BufferManagerImpl bufferManager = new BufferManagerImpl(100000);
         // Utilities.loadMoviesDataset(bufferManager, MOVIE_DATABASE_FILE);
         // Utilities.loadPeopleDataset(bufferManager, PEOPLE_DATABASE_FILE);
         // Utilities.loadWorkedOnDataset(bufferManager, WORKED_ON_DATABASE_FILE);
@@ -52,7 +65,7 @@ public class queryPerformanceTest {
         List<Integer> measuredIOs = new ArrayList<>();
         List<Integer> estimatedIOs = new ArrayList<>();
 
-        for (int i = 0; i < sampleRanges.size(); i++) {
+        for (int i = 1; i < sampleRanges.size(); i++) {
             String[] range = sampleRanges.get(i);
             String startKey = range[0].trim();
             String endKey = range[1].trim();
@@ -62,42 +75,77 @@ public class queryPerformanceTest {
                 startKey = endKey;
                 endKey = temp;
             }
-            int bufferSize = 100;
+            int bufferSize = 1000;
 
             BufferManagerImpl bufferManager = new BufferManagerImpl(bufferSize);
 
             bufferManager.resetIOCount();
             // Query Plan Construction
-            ScanOperator movieScan = new ScanOperator(bufferManager, MOVIES_DATA_PAGE_INDEX);
+            ScanOperator<MovieRecord> movieScan = new ScanOperator<>(bufferManager, MOVIES_DATA_PAGE_INDEX);
 
             List<SelectionPredicate> moviePredicates = new ArrayList<>();
             moviePredicates.add(new SelectionPredicate(1, startKey, Comparator.GREATER_THAN_OR_EQUALS));
             moviePredicates.add(new SelectionPredicate(1, endKey, Comparator.LESS_THAN_OR_EQUALS));
-            SelectionOperator movieSelection = new SelectionOperator(movieScan, moviePredicates);
+            SelectionOperator<MovieRecord> movieSelection = new SelectionOperator<>(movieScan, moviePredicates);
 
-            ScanOperator workedOnScan = new ScanOperator(bufferManager, WORKED_ON_DATA_PAGE_INDEX);
+            ScanOperator<WorkedOnRecord> workedOnScan = new ScanOperator<>(bufferManager, WORKED_ON_DATA_PAGE_INDEX);
 
             List<SelectionPredicate> workedOnPredicates = new ArrayList<>();
             workedOnPredicates.add(new SelectionPredicate(2, "director", Comparator.EQUALS));
-            SelectionOperator workedOnSelection = new SelectionOperator(workedOnScan, workedOnPredicates);
+            SelectionOperator<WorkedOnRecord> workedOnSelection = new SelectionOperator<>(workedOnScan,
+                    workedOnPredicates);
 
-            MaterializeOperator materialize = new MaterializeOperator(workedOnSelection, bufferManager, 2);
+            ProjectionOperator<WorkedOnRecord, MoviePersonRecord> workedOnProjection = new ProjectionOperator<>(
+                    workedOnSelection, ProjectionType.PROJECTION_ON_WORKED_ON);
 
-            BNLJoinOperator join1 = new BNLJoinOperator(movieSelection, materialize, 0, 0, (bufferSize - 4) / 2,
+            MaterializeOperator<MoviePersonRecord> workedOnMaterialized = new MaterializeOperator<>(workedOnProjection,
+                    bufferManager, MOVIE_PERSON_DATA_PAGE_INDEX);
+
+            BNLJoinOperator<MovieRecord, MoviePersonRecord, MovieWorkedOnJoinRecord> join1 = new BNLJoinOperator<>(
+                    movieSelection, workedOnMaterialized, 0, 0, (bufferSize - 4) / 2,
                     bufferManager, BNL_MOVIE_WORKED_ON_INDEX);
 
-            ScanOperator peopleScan = new ScanOperator(bufferManager, PEOPLE_DATA_PAGE_INDEX);
+            ScanOperator<PeopleRecord> peopleScan = new ScanOperator<>(bufferManager, PEOPLE_DATA_PAGE_INDEX);
 
-            BNLJoinOperator join2 = new BNLJoinOperator(join1, peopleScan, 1, 0, (bufferSize - 4) / 4, bufferManager,
+            BNLJoinOperator<MovieWorkedOnJoinRecord, PeopleRecord, MovieWorkedOnPeopleJoinRecord> join2 = new BNLJoinOperator<>(
+                    join1, peopleScan, 1, 0, (bufferSize - 4) / 4, bufferManager,
                     BNL_MOVIE_WORKED_ON_PEOPLE_INDEX);
-            ProjectionOperator projection = new ProjectionOperator(join2, ProjectionType.PROJECTION_ON_FINAL_JOIN);
+            ProjectionOperator<MovieWorkedOnPeopleJoinRecord, TitleNameRecord> projection = new ProjectionOperator<>(
+                    join2, ProjectionType.PROJECTION_ON_FINAL_JOIN);
 
             projection.open();
+
+            // Prepare Excel file
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("QueryResults_" + (i));
+            int rowNum = 0;
+            Row headerRow = sheet.createRow(rowNum++);
+            headerRow.createCell(0).setCellValue("Title");
+            headerRow.createCell(1).setCellValue("Name");
+
+            TitleNameRecord output;
             int recordCount = 0;
-            while (projection.next() != null) {
+            while ((output = projection.next()) != null) {
                 recordCount++;
+                String title = new String(output.movieTitle()).trim();
+                String name = new String(output.personName()).trim();
+
+                // Print to console
+                System.out.println(title + "," + name);
+
+                // Write to Excel
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(title);
+                row.createCell(1).setCellValue(name);
             }
             projection.close();
+
+            try (FileOutputStream fileOut = new FileOutputStream("query_output.xlsx")) {
+                workbook.write(fileOut);
+                workbook.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             // Note: Uncomment to create materialized table
             // bufferManager.resetMaterializedTable();
