@@ -12,10 +12,12 @@ public class ScanOperator<T extends ParentRecord> implements Operator<T> {
     private int currentPageId;
     private int currentRowId;
     private DataPage<T> currentPage;
+    private long totalRecords;
 
     public ScanOperator(BufferManagerImpl bufferManager, int catalogIndex) {
         this.bufferManager = bufferManager;
         this.catalogIndex = catalogIndex;
+        this.totalRecords = 0;
     }
 
     @Override
@@ -32,6 +34,7 @@ public class ScanOperator<T extends ParentRecord> implements Operator<T> {
             currentRowId++;
 
             if (record != null) {
+                totalRecords++;
                 return record;
             } else {
                 bufferManager.unpinPage(currentPageId, catalogIndex);
@@ -48,5 +51,9 @@ public class ScanOperator<T extends ParentRecord> implements Operator<T> {
         if (currentPage != null) {
             bufferManager.unpinPage(currentPageId, catalogIndex);
         }
+    }
+
+    public long getTotalRecords(){
+        return totalRecords;
     }
 }

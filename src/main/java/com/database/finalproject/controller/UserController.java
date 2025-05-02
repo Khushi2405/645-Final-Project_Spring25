@@ -42,6 +42,7 @@ public class UserController {
      * **/
     public UserController(int bufferSize) {
         this.bf = new BufferManagerImpl(bufferSize);
+        this.bufferSize = bufferSize;
 //        Utilities.loadMoviesDataset(bf, MOVIE_DATABASE_FILE);
 //        Utilities.loadWorkedOnDataset(bf, WORKED_ON_DATABASE_FILE);
 //        Utilities.loadPeopleDataset(bf, PEOPLE_DATABASE_FILE);
@@ -149,6 +150,7 @@ public class UserController {
 
 		// First BNL Join: Movies ⋈ WorkedOn
 		int blockSize = (bufferSize - 4) / 2; // assume C = 4 for safety
+        System.out.println(bufferSize + " " + blockSize);
 		BNLJoinOperator<MovieRecord, MoviePersonRecord, MovieWorkedOnJoinRecord> firstJoin =
 				new BNLJoinOperator<>(
 						movieSelection,
@@ -211,6 +213,14 @@ public class UserController {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+
+        System.out.println("Total records in Movies Table : " + movieScan.getTotalRecords());
+        System.out.println("Total records in Worked On Table : " + workedOnScan.getTotalRecords());
+        System.out.println("Total records in People Table : " + peopleScan.getTotalRecords());
+        System.out.println("Total records matched with Worked On Table : " + workedOnSelection.getTotalMatched());
+        System.out.println("Total records matched with Movies Table : " + movieSelection.getTotalMatched());
+        System.out.println("Actual total I/Os : " + bf.getIoCounter());
+
 
 		System.out.println("Query completed. Results saved to src/main/resources/static/query_output_"+ startRange + "_" + endRange + ".xlsx");
     }

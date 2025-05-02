@@ -11,9 +11,12 @@ public class SelectionOperator<T extends ParentRecord> implements Operator<T> {
     private final Operator<T> childOperator;
     private final List<SelectionPredicate> predicates;
 
+    private long  matchCount;
+
     public SelectionOperator(Operator<T> childOperator, List<SelectionPredicate> predicates) {
         this.childOperator = childOperator;
         this.predicates = predicates;
+        this.matchCount = 0;
     }
 
     @Override
@@ -26,6 +29,7 @@ public class SelectionOperator<T extends ParentRecord> implements Operator<T> {
         T record;
         while ((record = (T) childOperator.next()) != null) {
             if (matchesAllPredicates(record)) {
+                matchCount++;
                 return record;
             }
         }
@@ -57,5 +61,9 @@ public class SelectionOperator<T extends ParentRecord> implements Operator<T> {
             case LESS_THAN -> cmp < 0;
             case LESS_THAN_OR_EQUALS -> cmp <= 0;
         };
+    }
+
+    public long getTotalMatched(){
+        return matchCount;
     }
 }

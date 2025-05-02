@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.database.finalproject.model.page.*;
 import com.database.finalproject.model.record.MoviePersonRecord;
@@ -33,8 +34,9 @@ public class BufferManagerImpl extends BufferManager {
     RandomAccessFile moviePersonDataRaf;
     RandomAccessFile movieIdIndexRaf;
     RandomAccessFile movieTitleRaf;
-    int movieWorksOnBlockPageCount = 0;
-    int movieWorksOnPeopleBlockPageCount = 0;
+    int movieWorksOnBlockPageCount;
+    int movieWorksOnPeopleBlockPageCount;
+    AtomicInteger ioCounter;
     public static Logger logger = LoggerFactory.getLogger(BufferManagerImpl.class);
 
     public BufferManagerImpl(@Value("${buffer.size:10}") int bufferSize) {
@@ -43,6 +45,9 @@ public class BufferManagerImpl extends BufferManager {
         this.pageHash = new HashMap<>();
         tailBufferPool = null;
         headBufferPool = null;
+        this.movieWorksOnPeopleBlockPageCount = 0;
+        this.movieWorksOnBlockPageCount = 0;
+        this.ioCounter = new AtomicInteger();
 
 
         try {
@@ -91,6 +96,7 @@ public class BufferManagerImpl extends BufferManager {
     public Page getPage(int pageId, int ...index) {
         // Logic to fetch a page from buffer
         int catalogIndex = getCatalogIndex(index);
+        ioCounter.incrementAndGet();
         Pair<Integer, Integer> pair = new Pair(pageId, catalogIndex);
         // if page id already in buffer then move it to front and increment the pin counter
         if (pageHash.containsKey(pair)) {
@@ -131,7 +137,7 @@ public class BufferManagerImpl extends BufferManager {
         // Logic to create a new page
 
         int catalogIndex = getCatalogIndex(index);
-
+        ioCounter.incrementAndGet();
         if (pageHash.size() > bufferSize - 1) {
             if (!removeLRUNode()) {
                 // buffer manager is full throw error
@@ -510,6 +516,10 @@ public class BufferManagerImpl extends BufferManager {
             node = node.next;
         }
         System.out.println();
+    }
+
+    public AtomicInteger getIoCounter(){
+        return ioCounter;
     }
 
 }
