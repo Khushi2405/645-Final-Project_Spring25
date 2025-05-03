@@ -15,8 +15,8 @@ public record MovieRecord(byte[] movieId, byte[] movieTitle) implements ParentRe
     }
 
     public MovieRecord {
-        movieId = truncateOrPadByteArray(movieId, 9);
-        movieTitle = truncateOrPadByteArray(movieTitle, 30);
+        movieId = truncateOrPadByteArray(movieId, MOVIE_ID_SIZE);
+        movieTitle = truncateOrPadByteArray(movieTitle, MOVIE_TITLE_SIZE);
     }
 
     @Override

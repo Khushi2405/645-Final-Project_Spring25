@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.database.finalproject.model.page.*;
 import com.database.finalproject.model.record.MoviePersonRecord;
@@ -32,9 +33,9 @@ public class BufferManagerImpl extends BufferManager {
     RandomAccessFile moviePersonDataRaf;
     RandomAccessFile movieIdIndexRaf;
     RandomAccessFile movieTitleRaf;
-    int movieWorksOnBlockPageCount = 0;
-    int movieWorksOnPeopleBlockPageCount = 0;
-    int ioCount = 0;
+    int movieWorksOnBlockPageCount;
+    int movieWorksOnPeopleBlockPageCount;
+    AtomicInteger ioCounter;
     public static Logger logger = LoggerFactory.getLogger(BufferManagerImpl.class);
 
     public BufferManagerImpl(@Value("${buffer.size:10}") int bufferSize) {
@@ -43,6 +44,9 @@ public class BufferManagerImpl extends BufferManager {
         this.pageHash = new HashMap<>();
         tailBufferPool = null;
         headBufferPool = null;
+        this.movieWorksOnPeopleBlockPageCount = 0;
+        this.movieWorksOnBlockPageCount = 0;
+        this.ioCounter = new AtomicInteger();
 
         try {
             movieDataRaf = new RandomAccessFile(catalog.getCatalog(MOVIES_DATA_PAGE_INDEX).get("filename"), "rw");
@@ -90,8 +94,9 @@ public class BufferManagerImpl extends BufferManager {
     @Override
     public Page getPage(int pageId, int... index) {
         // Logic to fetch a page from buffer
-        incrementIO();
+        // incrementIO();
         int catalogIndex = getCatalogIndex(index);
+        ioCounter.incrementAndGet();
         Pair<Integer, Integer> pair = new Pair(pageId, catalogIndex);
         // if page id already in buffer then move it to front and increment the pin
         // counter
@@ -132,9 +137,9 @@ public class BufferManagerImpl extends BufferManager {
     public Page createPage(int... index) {
         // Logic to create a new page
 
-        incrementIO();
+        // incrementIO();
         int catalogIndex = getCatalogIndex(index);
-
+        ioCounter.incrementAndGet();
         if (pageHash.size() > bufferSize - 1) {
             if (!removeLRUNode()) {
                 // buffer manager is full throw error
@@ -168,11 +173,9 @@ public class BufferManagerImpl extends BufferManager {
         }
         if (catalogIndex >= 0) {
             catalog.setCatalog(catalogIndex, DATABASE_CATALOGUE_KEY_TOTAL_PAGES, String.valueOf(pageCount));
-        }
-        else if(catalogIndex == -1){
+        } else if (catalogIndex == -1) {
             movieWorksOnBlockPageCount++;
-        }
-        else if(catalogIndex == -2){
+        } else if (catalogIndex == -2) {
             movieWorksOnPeopleBlockPageCount++;
         }
         DLLNode currNode = new DLLNode(page, catalogIndex);
@@ -346,7 +349,6 @@ public class BufferManagerImpl extends BufferManager {
         try {
             long offset = (long) (pageId) * PAGE_SIZE;
             if (raf.length() <= offset) {
-                logger.error("Page not found: {}", pageId);
                 return null;
             }
             raf.seek(offset);
@@ -503,17 +505,17 @@ public class BufferManagerImpl extends BufferManager {
         return catalogIndex;
     }
 
-    public synchronized void resetIOCount() {
-        ioCount = 0;
-    }
+    // public synchronized void resetIOCount() {
+    // ioCount = 0;
+    // }
 
-    public synchronized int getIOCount() {
-        return ioCount;
-    }
+    // public synchronized int getIOCount() {
+    // return ioCount;
+    // }
 
-    private synchronized void incrementIO() {
-        ioCount++;
-    }
+    // private synchronized void incrementIO() {
+    // ioCount++;
+    // }
 
     public void resetMaterializedTable() {
         catalog.setCatalog(MOVIE_PERSON_DATA_PAGE_INDEX, DATABASE_CATALOGUE_KEY_TOTAL_PAGES, String.valueOf(0));
@@ -526,6 +528,10 @@ public class BufferManagerImpl extends BufferManager {
             node = node.next;
         }
         System.out.println();
+    }
+
+    public AtomicInteger getIoCounter() {
+        return ioCounter;
     }
 
 }

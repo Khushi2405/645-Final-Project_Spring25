@@ -23,6 +23,9 @@ public class PageConstants {
     public static final byte PADDING_BYTE = 0x7F;
     public static final int MOVIE_ID_SIZE = 9; // Movie ID size (9 bytes)
     public static final int MOVIE_TITLE_SIZE = 30;
+    public static final int PERSON_ID_SIZE = 10;
+    public static final int CATEGORY_SIZE = 20;
+    public static final int PERSON_NAME_SIZE = 105;
     public static final int PAGE_ID_SIZE = 4; // Page ID size (4 bytes)
     public static final int SLOT_ID_SIZE = 1;
 

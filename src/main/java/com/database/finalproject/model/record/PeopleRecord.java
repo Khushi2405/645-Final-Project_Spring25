@@ -2,13 +2,12 @@ package com.database.finalproject.model.record;
 
 import com.database.finalproject.model.record.ParentRecord;
 
-import static com.database.finalproject.constants.PageConstants.removeTrailingBytes;
-import static com.database.finalproject.constants.PageConstants.truncateOrPadByteArray;
+import static com.database.finalproject.constants.PageConstants.*;
 
 public record PeopleRecord(byte[] personId, byte[] name) implements ParentRecord {
     public PeopleRecord {
-        personId = truncateOrPadByteArray(personId, 10);
-        name = truncateOrPadByteArray(name, 105);
+        personId = truncateOrPadByteArray(personId, PERSON_ID_SIZE);
+        name = truncateOrPadByteArray(name, PERSON_NAME_SIZE);
     }
 
     @Override

@@ -2,14 +2,13 @@ package com.database.finalproject.model.record;
 
 import com.database.finalproject.model.record.ParentRecord;
 
-import static com.database.finalproject.constants.PageConstants.removeTrailingBytes;
-import static com.database.finalproject.constants.PageConstants.truncateOrPadByteArray;
+import static com.database.finalproject.constants.PageConstants.*;
 
 public record WorkedOnRecord(byte[] movieId, byte[] personId, byte[] category) implements ParentRecord {
     public WorkedOnRecord {
-        movieId = truncateOrPadByteArray(movieId, 9);
-        personId = truncateOrPadByteArray(personId, 10);
-        category = truncateOrPadByteArray(category, 20);
+        movieId = truncateOrPadByteArray(movieId, MOVIE_ID_SIZE);
+        personId = truncateOrPadByteArray(personId, PERSON_ID_SIZE);
+        category = truncateOrPadByteArray(category, CATEGORY_SIZE);
     }
 
 
