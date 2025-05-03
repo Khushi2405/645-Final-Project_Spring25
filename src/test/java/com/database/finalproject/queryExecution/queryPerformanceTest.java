@@ -141,7 +141,7 @@ public class queryPerformanceTest {
             }
             projection.close();
 
-            try (FileOutputStream fileOut = new FileOutputStream("query_output.xlsx")) {
+            try (FileOutputStream fileOut = new FileOutputStream("query_output_" + i + ".xlsx")) {
                 workbook.write(fileOut);
                 workbook.close();
             } catch (IOException e) {
@@ -151,7 +151,7 @@ public class queryPerformanceTest {
             // Note: Uncomment to create materialized table
             // bufferManager.resetMaterializedTable();
 
-            double measuredSelectivity = recordCount / (double) getTotalMoviesCount();
+            double measuredSelectivity = (recordCount) / (double) getTotalMoviesCount();
             AtomicInteger measuredIO = bufferManager.getIoCounter();
             int estimatedIO = (int) estimateIO(bufferSize, measuredSelectivity);
 
@@ -180,38 +180,38 @@ public class queryPerformanceTest {
 
     private static int getTotalMoviesCount() {
         // This should return the total number of records in the Movies table
-        return 53648 * 105;
+        return 5632943;
     }
 
     private static long estimateIO(int bufferSize, double movieSelectivity) {
+        System.out.println("Selectivity: " + movieSelectivity);
         long totalMoviePages = 53648;
         long workedOnPages = 486153;
         long peoplePages = 410238;
-        // long selectedWorkedOnPages = 0; // const to be calc offline
 
-        long selectedMoviePages = (long) (movieSelectivity * totalMoviePages);
+        long selectedMoviePages = (long) (Math.ceil(movieSelectivity * getTotalMoviesCount() / 105));
 
-        long projectedWorkedOnPages = (long) (3391); // materialized pages
+        long projectedWorkedOnPages = (long) (19385); // materialized pages
 
         // Materialize projected selection: write + read
         long workedOnMaterializeIO = 2 * projectedWorkedOnPages;
 
         // First join (Movies ⨝ WorkedOn)
-        long join1Cost = selectedMoviePages * projectedWorkedOnPages / bufferSize;
+        int blockSize = (bufferSize - 4) / 2;
+        long join1Cost = selectedMoviePages + (projectedWorkedOnPages * (selectedMoviePages / blockSize));
 
-        long join1OutputPages = join1Cost; // TODO: join 1 OP pages??
+        long join1OutputPages = selectedMoviePages;
 
         // Second join (Join1Result ⨝ People)
-        long join2Cost = join1OutputPages * peoplePages / bufferSize;
+        long join2Cost = join1OutputPages + (peoplePages * (join1OutputPages / blockSize));
 
-        // TODO: check join cost
         // Total estimated I/O:2ws
         return totalMoviePages // read movies
                 + workedOnPages // scan workedOn
                 + workedOnMaterializeIO // materialized write+read
-                + join1Cost * 2 // join reads both sides
+                + join1Cost // join reads both sides
                 + peoplePages // read people table
-                + join2Cost * 2; // second join reads both sides
+                + join2Cost; // second join reads both sides
     }
 
     private static void plotAndSaveIOGraph(List<Double> selectivities,
