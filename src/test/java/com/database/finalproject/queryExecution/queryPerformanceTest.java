@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -62,7 +63,7 @@ public class queryPerformanceTest {
         List<String[]> sampleRanges = readRangesFromCSV(SAMPLE_RANGES_CSV);
 
         List<Double> selectivities = new ArrayList<>();
-        List<Integer> measuredIOs = new ArrayList<>();
+        List<AtomicInteger> measuredIOs = new ArrayList<>();
         List<Integer> estimatedIOs = new ArrayList<>();
 
         for (int i = 1; i < sampleRanges.size(); i++) {
@@ -127,11 +128,11 @@ public class queryPerformanceTest {
             int recordCount = 0;
             while ((output = projection.next()) != null) {
                 recordCount++;
-                String title = new String(output.movieTitle()).trim();
-                String name = new String(output.personName()).trim();
+                String title = new String(output.title()).trim();
+                String name = new String(output.name()).trim();
 
                 // Print to console
-                System.out.println(title + "," + name);
+                // System.out.println(title + "," + name);
 
                 // Write to Excel
                 Row row = sheet.createRow(rowNum++);
@@ -151,7 +152,7 @@ public class queryPerformanceTest {
             // bufferManager.resetMaterializedTable();
 
             double measuredSelectivity = recordCount / (double) getTotalMoviesCount();
-            int measuredIO = bufferManager.getIOCount();
+            AtomicInteger measuredIO = bufferManager.getIoCounter();
             int estimatedIO = (int) estimateIO(bufferSize, measuredSelectivity);
 
             selectivities.add(measuredSelectivity);
@@ -214,7 +215,7 @@ public class queryPerformanceTest {
     }
 
     private static void plotAndSaveIOGraph(List<Double> selectivities,
-            List<Integer> measuredIOs,
+            List<AtomicInteger> measuredIOs,
             List<Integer> estimatedIOs,
             String outputPath) throws IOException {
         XYSeries measuredSeries = new XYSeries("Measured I/O");

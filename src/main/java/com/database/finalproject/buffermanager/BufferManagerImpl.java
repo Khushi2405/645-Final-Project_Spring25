@@ -505,9 +505,9 @@ public class BufferManagerImpl extends BufferManager {
         return catalogIndex;
     }
 
-    // public synchronized void resetIOCount() {
-    // ioCount = 0;
-    // }
+    public synchronized void resetIOCount() {
+        ioCounter.set(0);
+    }
 
     // public synchronized int getIOCount() {
     // return ioCount;
