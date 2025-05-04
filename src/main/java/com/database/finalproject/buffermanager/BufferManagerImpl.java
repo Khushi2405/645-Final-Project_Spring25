@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-
 import static com.database.finalproject.constants.PageConstants.*;
 
 @Component
@@ -48,7 +47,6 @@ public class BufferManagerImpl extends BufferManager {
         this.movieWorksOnPeopleBlockPageCount = 0;
         this.movieWorksOnBlockPageCount = 0;
         this.ioCounter = new AtomicInteger();
-
 
         try {
             movieDataRaf = new RandomAccessFile(catalog.getCatalog(MOVIES_DATA_PAGE_INDEX).get("filename"), "rw");
@@ -145,41 +143,27 @@ public class BufferManagerImpl extends BufferManager {
                 return null;
             }
         }
-        // TODO: handle pagecount
-        int pageCount;
-        if (catalogIndex == -1) {
-            pageCount = movieWorksOnBlockPageCount;
-        } else if (catalogIndex == -2) {
-            pageCount = movieWorksOnPeopleBlockPageCount;
-        } else {
+        int pageCount = 0;
+        if (catalogIndex >= 0)
             pageCount = Integer.parseInt(catalog.getCatalog(catalogIndex).get("totalPages"));
-        }
         Page page;
-        if(catalogIndex == MOVIES_DATA_PAGE_INDEX) {
+        if (catalogIndex == MOVIES_DATA_PAGE_INDEX) {
             page = new MovieDataPage(pageCount++);
-        }
-        else if(catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX){
+        } else if (catalogIndex == MOVIE_ID_INDEX_PAGE_INDEX) {
             page = new IndexPage(pageCount++, MOVIE_ID_INDEX_PAGE_INDEX);
-        }
-        else if(catalogIndex == MOVIE_TITLE_INDEX_INDEX){
+        } else if (catalogIndex == MOVIE_TITLE_INDEX_INDEX) {
             page = new IndexPage(pageCount++, MOVIE_TITLE_INDEX_INDEX);
-        }
-        else if(catalogIndex == WORKED_ON_DATA_PAGE_INDEX){
+        } else if (catalogIndex == WORKED_ON_DATA_PAGE_INDEX) {
             page = new WorkedOnDataPage(pageCount++);
-        }
-        else if(catalogIndex == PEOPLE_DATA_PAGE_INDEX){
+        } else if (catalogIndex == PEOPLE_DATA_PAGE_INDEX) {
             page = new PeopleDataPage(pageCount++);
-        }
-        else if(catalogIndex == MOVIE_PERSON_DATA_PAGE_INDEX){
+        } else if (catalogIndex == BNL_MOVIE_WORKED_ON_INDEX) {
+            page = new MovieDataPage(movieWorksOnBlockPageCount++);
+        } else if (catalogIndex == BNL_MOVIE_WORKED_ON_PEOPLE_INDEX) {
+            page = new MoviesWorkedOnJoinPage(movieWorksOnPeopleBlockPageCount++);
+        } else if (catalogIndex == MOVIE_PERSON_DATA_PAGE_INDEX) {
             page = new MoviePersonDataPage(pageCount++);
-        }
-        else if (catalogIndex == BNL_MOVIE_WORKED_ON_INDEX) {
-            page = new MovieDataPage(pageCount++);
-        }
-        else if (catalogIndex == BNL_MOVIE_WORKED_ON_PEOPLE_INDEX) {
-            page = new MoviesWorkedOnJoinPage(pageCount++);
-        }
-        else {
+        } else {
             logger.error("Incorrect index for page");
             return null;
         }
