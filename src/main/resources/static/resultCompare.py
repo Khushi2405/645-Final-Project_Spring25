@@ -59,3 +59,13 @@ only_in_xlsx, only_in_csv = compare_as_sets(xlsx_data, csv_data)
 
 print(f"Rows only in XLSX: {len(only_in_xlsx)}")
 print(f"Rows only in CSV : {len(only_in_csv)}")
+
+# if only_in_xlsx:
+#     print("\nSample from XLSX not in CSV:")
+#     for row in list(only_in_xlsx)[:5]:
+#         print(row)
+
+# if only_in_csv:
+#     print("\nSample from CSV not in XLSX:")
+#     for row in list(only_in_csv)[:5]:
+#         print(row)

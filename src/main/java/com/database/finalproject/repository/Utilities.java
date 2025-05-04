@@ -12,6 +12,7 @@ import com.database.finalproject.model.record.PeopleRecord;
 import com.database.finalproject.model.record.WorkedOnRecord;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static com.database.finalproject.constants.PageConstants.*;
@@ -183,8 +184,10 @@ public class Utilities {
     }
 
     public static void convertMovies(String inputFile, String outputFile) {
-        try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
-             BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(inputFile), StandardCharsets.UTF_8));
+                BufferedWriter bw = new BufferedWriter(
+                        new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8))) {
 
             // Skip header
             String line = br.readLine();
@@ -192,21 +195,27 @@ public class Utilities {
             while ((line = br.readLine()) != null) {
                 String[] columns = line.split("\t");
                 if (columns.length < 3) continue;
+                try {
+                    byte[] movieId = columns[0].getBytes();
+                    byte[] movieTitle = columns[2].getBytes();
 
-                byte[] movieId = columns[0].getBytes();
-                byte[] movieTitle = columns[2].getBytes();
+                    if (movieId.length > 9)
+                        continue;
 
-                if (movieId.length > 9) continue;
+                    // Truncate to expected sizes
+                    movieId = truncateOrPadByteArray(movieId, 9);
+                    movieTitle = truncateOrPadByteArray(movieTitle, 30);
 
-                // Truncate to expected sizes
-                movieId = truncateOrPadByteArray(movieId, 9);
-                movieTitle = truncateOrPadByteArray(movieTitle, 30);
+                    String movieIdStr = new String(removeTrailingBytes(movieId)).trim();
+                    String movieTitleStr = new String(removeTrailingBytes(movieTitle)).trim();
 
-                String movieIdStr = new String(removeTrailingBytes(movieId)).trim();
-                String movieTitleStr = new String(removeTrailingBytes(movieTitle)).trim();
+                    bw.write(movieIdStr + "\t" + movieTitleStr);
+                    bw.newLine();
 
-                bw.write(movieIdStr + "," + movieTitleStr);
-                bw.newLine();
+                } catch (Exception e) {
+                    // Skip malformed rows
+                    continue;
+                }
             }
 
         } catch (IOException e) {
@@ -217,8 +226,12 @@ public class Utilities {
     }
 
     public static void convertPeople(String inputFile, String outputFile) {
-        try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
-             BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(inputFile),
+                        StandardCharsets.UTF_8));
+                BufferedWriter bw = new BufferedWriter(
+                        new OutputStreamWriter(new FileOutputStream(outputFile),
+                                StandardCharsets.UTF_8))) {
 
             // Skip header
             String line = br.readLine();
@@ -227,19 +240,28 @@ public class Utilities {
                 String[] columns = line.split("\t");
                 if (columns.length < 2) continue;
 
-                byte[] personId = columns[0].getBytes();
-                byte[] name = columns[1].getBytes();
+                try {
+                    byte[] personId = columns[0].getBytes(StandardCharsets.UTF_8);
+                    byte[] name = columns[1].getBytes(StandardCharsets.UTF_8);
 
-                if (personId.length > 10) continue;
+                    if (personId.length > 10)
+                        continue;
 
-                personId = truncateOrPadByteArray(personId, 10);
-                name = truncateOrPadByteArray(name, 105);
+                    personId = truncateOrPadByteArray(personId, 10);
+                    name = truncateOrPadByteArray(name, 105);
 
-                String personIdStr = new String(removeTrailingBytes(personId)).trim();
-                String nameStr = new String(removeTrailingBytes(name)).trim();
+                    String personIdStr = new String(removeTrailingBytes(personId),
+                            StandardCharsets.UTF_8).trim();
+                    String nameStr = new String(removeTrailingBytes(name),
+                            StandardCharsets.UTF_8).trim();
 
-                bw.write(personIdStr + "," + nameStr);
-                bw.newLine();
+                    bw.write(personIdStr + "\t" + nameStr);
+                    bw.newLine();
+
+                } catch (Exception e) {
+                    // Skip rows with encoding issues
+                    continue;
+                }
             }
 
         } catch (IOException e) {
@@ -250,8 +272,10 @@ public class Utilities {
     }
 
     public static void convertWorkedOn(String inputFile, String outputFile) {
-        try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
-             BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(inputFile), StandardCharsets.UTF_8));
+                BufferedWriter bw = new BufferedWriter(
+                        new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8))) {
 
             // Skip header
             String line = br.readLine();
@@ -259,23 +283,28 @@ public class Utilities {
             while ((line = br.readLine()) != null) {
                 String[] columns = line.split("\t");
                 if (columns.length < 4) continue;
+                try {
+                    byte[] movieId = columns[0].getBytes();
+                    byte[] personId = columns[2].getBytes();
+                    byte[] category = columns[3].getBytes();
 
-                byte[] movieId = columns[0].getBytes();
-                byte[] personId = columns[2].getBytes();
-                byte[] category = columns[3].getBytes();
 
                 if (movieId.length > 9 || personId.length > 10) continue;
+                    movieId = truncateOrPadByteArray(movieId, 9);
+                    personId = truncateOrPadByteArray(personId, 10);
+                    category = truncateOrPadByteArray(category, 20);
 
-                movieId = truncateOrPadByteArray(movieId, 9);
-                personId = truncateOrPadByteArray(personId, 10);
-                category = truncateOrPadByteArray(category, 20);
+                    String movieIdStr = new String(removeTrailingBytes(movieId)).trim();
+                    String personIdStr = new String(removeTrailingBytes(personId)).trim();
+                    String categoryStr = new String(removeTrailingBytes(category)).trim();
 
-                String movieIdStr = new String(removeTrailingBytes(movieId)).trim();
-                String personIdStr = new String(removeTrailingBytes(personId)).trim();
-                String categoryStr = new String(removeTrailingBytes(category)).trim();
+                    bw.write(movieIdStr + "\t" + personIdStr + "\t" + categoryStr);
+                    bw.newLine();
 
-                bw.write(movieIdStr + "," + personIdStr + "," + categoryStr);
-                bw.newLine();
+                } catch (Exception e) {
+                    // TODO: handle exception
+                    continue;
+                }
             }
 
         } catch (IOException e) {
