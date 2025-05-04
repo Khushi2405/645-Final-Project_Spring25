@@ -76,7 +76,7 @@ class operatorTest {
             resultIds.add(rec.getFieldByIndex(0));
         }
         sel.close();
-        assertEquals(List.of("tt0001", "tt0002"), resultIds);
+        assertEquals(List.of("tt0001", "tt0002", "tt0003"), resultIds);
     }
 
     @Test

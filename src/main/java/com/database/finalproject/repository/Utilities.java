@@ -11,9 +11,7 @@ import com.database.finalproject.model.Rid;
 import com.database.finalproject.model.record.PeopleRecord;
 import com.database.finalproject.model.record.WorkedOnRecord;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 
 import static com.database.finalproject.constants.PageConstants.*;
@@ -182,5 +180,120 @@ public class Utilities {
             dataPageId++;
         }
         bf.force();
+    }
+
+    public static void convertMovies(String inputFile, String outputFile) {
+        try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+
+            // Skip header
+            String line = br.readLine();
+
+            while ((line = br.readLine()) != null) {
+                String[] columns = line.split("\t");
+                if (columns.length < 3) continue;
+
+                byte[] movieId = columns[0].getBytes();
+                byte[] movieTitle = columns[2].getBytes();
+
+                if (movieId.length > 9) continue;
+
+                // Truncate to expected sizes
+                movieId = truncateOrPadByteArray(movieId, 9);
+                movieTitle = truncateOrPadByteArray(movieTitle, 30);
+
+                String movieIdStr = new String(removeTrailingBytes(movieId)).trim();
+                String movieTitleStr = new String(removeTrailingBytes(movieTitle)).trim();
+
+                bw.write(movieIdStr + "," + movieTitleStr);
+                bw.newLine();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        countRows(outputFile, "Movies");
+    }
+
+    public static void convertPeople(String inputFile, String outputFile) {
+        try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+
+            // Skip header
+            String line = br.readLine();
+
+            while ((line = br.readLine()) != null) {
+                String[] columns = line.split("\t");
+                if (columns.length < 2) continue;
+
+                byte[] personId = columns[0].getBytes();
+                byte[] name = columns[1].getBytes();
+
+                if (personId.length > 10) continue;
+
+                personId = truncateOrPadByteArray(personId, 10);
+                name = truncateOrPadByteArray(name, 105);
+
+                String personIdStr = new String(removeTrailingBytes(personId)).trim();
+                String nameStr = new String(removeTrailingBytes(name)).trim();
+
+                bw.write(personIdStr + "," + nameStr);
+                bw.newLine();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        countRows(outputFile, "People");
+    }
+
+    public static void convertWorkedOn(String inputFile, String outputFile) {
+        try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+
+            // Skip header
+            String line = br.readLine();
+
+            while ((line = br.readLine()) != null) {
+                String[] columns = line.split("\t");
+                if (columns.length < 4) continue;
+
+                byte[] movieId = columns[0].getBytes();
+                byte[] personId = columns[2].getBytes();
+                byte[] category = columns[3].getBytes();
+
+                if (movieId.length > 9 || personId.length > 10) continue;
+
+                movieId = truncateOrPadByteArray(movieId, 9);
+                personId = truncateOrPadByteArray(personId, 10);
+                category = truncateOrPadByteArray(category, 20);
+
+                String movieIdStr = new String(removeTrailingBytes(movieId)).trim();
+                String personIdStr = new String(removeTrailingBytes(personId)).trim();
+                String categoryStr = new String(removeTrailingBytes(category)).trim();
+
+                bw.write(movieIdStr + "," + personIdStr + "," + categoryStr);
+                bw.newLine();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        countRows(outputFile, "WorkedOn");
+    }
+
+    private static void countRows(String filePath, String datasetName) {
+        int count = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            while (br.readLine() != null) {
+                count++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(datasetName + ": " + count + " rows confirmed in " + filePath);
     }
 }

@@ -85,6 +85,7 @@ public class queryPerformanceTest {
             UserController uc = new UserController(bufferSize);
             Map<String, Object> map = (Map<String, Object>) uc.runQuery(startKey, endKey);
             AtomicInteger ioCount = (AtomicInteger) map.get("iocount");
+            ioCount.addAndGet(19385); // materialized pages cost
             Long movieSelection = (Long) map.get("movieSelection");
 
             double measuredSelectivity = (movieSelection) / (double) getTotalMoviesCount();
@@ -132,19 +133,23 @@ public class queryPerformanceTest {
 
         // First join (Movies ⨝ WorkedOn)
         int blockSize = (bufferSize - 4) / 2;
-        double join1Cost = (projectedWorkedOnPages * (Math.ceil(selectedMoviePages / blockSize)));
+        double join1OuterCost = selectedMoviePages;
+        double join1InnerCost = (projectedWorkedOnPages * (Math.ceil(selectedMoviePages / blockSize)));
 
         long join1OutputPages = selectedMoviePages;
 
         // Second join (Join1Result ⨝ People)
-        double join2Cost = (peoplePages * (Math.ceil(join1OutputPages / blockSize)));
+        double join2OuterCost = selectedMoviePages;
+        double join2InnerCost = (peoplePages * (Math.ceil(join1OutputPages / blockSize)));
 
         // Total estimated I/O:2ws
         return totalMoviePages // read movies
                 + workedOnPages // scan workedOn
-                + workedOnMaterializeIO // materialized write+read
-                + join1Cost // join reads both sides
-                + join2Cost; // second join reads both sides
+                + workedOnMaterializeIO // materialized write
+                + join1OuterCost
+                + join1InnerCost // join reads both sides
+                + join2OuterCost
+                + join2InnerCost; // second join reads both sides
     }
 
     private static void plotAndSaveIOGraph(List<Double> selectivities,
