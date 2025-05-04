@@ -34,7 +34,7 @@ public class ProjectionOperator<I extends ParentRecord, O extends ParentRecord> 
                 yield new MoviePersonRecord(movieId, personId);
             }
             case PROJECTION_ON_FINAL_JOIN -> {
-                byte[] title = record.getFieldByIndex(1).getBytes(); // assuming join record layout
+                byte[] title = record.getFieldByIndex(2).getBytes(); // assuming join record layout
                 byte[] name  = record.getFieldByIndex(3).getBytes();
                 yield new TitleNameRecord(title, name);
             }
