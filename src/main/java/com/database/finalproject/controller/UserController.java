@@ -151,7 +151,7 @@ public class UserController {
 
 		// First BNL Join: Movies ⋈ WorkedOn
 		int blockSize = (bufferSize - 4) / 2; // assume C = 4 for safety
-        System.out.println(bufferSize + " " + blockSize);
+//        System.out.println(bufferSize + " " + blockSize);
 		BNLJoinOperator<MovieRecord, MoviePersonRecord, MovieWorkedOnJoinRecord> firstJoin =
 				new BNLJoinOperator<>(
 						movieSelection,
