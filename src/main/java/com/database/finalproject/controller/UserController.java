@@ -18,8 +18,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static com.database.finalproject.constants.PageConstants.*;
 
@@ -119,8 +121,7 @@ public class UserController {
         return ans;
     }
 
-
-    public void runQuery(String startRange, String endRange) {
+    public Object runQuery(String startRange, String endRange) {
         // Scan Movies
 		ScanOperator<MovieRecord> movieScan = new ScanOperator<>(bf, MOVIES_DATA_PAGE_INDEX);
 
@@ -223,5 +224,9 @@ public class UserController {
 
 
 		System.out.println("Query completed. Results saved to src/main/resources/static/query_output_"+ startRange + "_" + endRange + ".xlsx");
+        Map<String, Object> result = new HashMap<>();
+        result.put("iocount", bf.getIoCounter());
+        result.put("movieSelection", movieSelection.getTotalMatched());
+        return result;
     }
 }
