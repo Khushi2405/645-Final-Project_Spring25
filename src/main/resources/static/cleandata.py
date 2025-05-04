@@ -6,8 +6,7 @@ def clean_value(val):
     return '' if val == '\\N' else val
 
 def pad_or_truncate(val, size):
-    val_bytes = val.encode('utf-8')[:size]
-    return val_bytes.ljust(size, b' ').decode('utf-8', errors='ignore')
+    return val.encode('utf-8')[:size].decode('utf-8', errors='ignore')
 
 # Part 1: Clean title_basics.tsv
 def process_titles(input_file, output_file):
@@ -74,6 +73,6 @@ def process_names(input_file, output_file):
 
 
 # Run all processing steps
-# process_titles('title.basics.tsv', 'cleaned_movies.csv')
-# process_principals('title.principals.tsv', 'cleaned_workedon.csv')
+process_titles('title.basics.tsv', 'cleaned_movies.csv')
+process_principals('title.principals.tsv', 'cleaned_workedon.csv')
 process_names('name.basics.tsv', 'cleaned_people.csv')

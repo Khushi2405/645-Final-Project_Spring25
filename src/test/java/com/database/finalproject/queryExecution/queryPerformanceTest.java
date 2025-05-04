@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.poi.ss.usermodel.Row;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.database.finalproject.buffermanager.BufferManagerImpl;
+import com.database.finalproject.controller.UserController;
 import com.database.finalproject.model.Comparator;
 import com.database.finalproject.model.ProjectionType;
 import com.database.finalproject.model.SelectionPredicate;
@@ -48,15 +50,16 @@ import com.database.finalproject.queryplan.ScanOperator;
 import com.database.finalproject.queryplan.SelectionOperator;
 
 public class queryPerformanceTest {
-    @BeforeAll
-    static void setup() {
-        // Note: Please update the database_catalogue.txt to make the number of pages of
-        // the respective table to 0 before running this.
-        // BufferManagerImpl bufferManager = new BufferManagerImpl(100000);
-        // Utilities.loadMoviesDataset(bufferManager, MOVIE_DATABASE_FILE);
-        // Utilities.loadPeopleDataset(bufferManager, PEOPLE_DATABASE_FILE);
-        // Utilities.loadWorkedOnDataset(bufferManager, WORKED_ON_DATABASE_FILE);
-    }
+    // @BeforeAll
+    // static void setup() {
+    // // Note: Please update the database_catalogue.txt to make the number of pages
+    // of
+    // // the respective table to 0 before running this.
+    // // BufferManagerImpl bufferManager = new BufferManagerImpl(100000);
+    // // Utilities.loadMoviesDataset(bufferManager, MOVIE_DATABASE_FILE);
+    // // Utilities.loadPeopleDataset(bufferManager, PEOPLE_DATABASE_FILE);
+    // // Utilities.loadWorkedOnDataset(bufferManager, WORKED_ON_DATABASE_FILE);
+    // }
 
     @Test
     void performanceTest() throws IOException {
@@ -64,7 +67,7 @@ public class queryPerformanceTest {
 
         List<Double> selectivities = new ArrayList<>();
         List<AtomicInteger> measuredIOs = new ArrayList<>();
-        List<Integer> estimatedIOs = new ArrayList<>();
+        List<Double> estimatedIOs = new ArrayList<>();
 
         for (int i = 1; i < sampleRanges.size(); i++) {
             String[] range = sampleRanges.get(i);
@@ -76,87 +79,19 @@ public class queryPerformanceTest {
                 startKey = endKey;
                 endKey = temp;
             }
-            int bufferSize = 1000;
+            int bufferSize = 100000;
 
-            BufferManagerImpl bufferManager = new BufferManagerImpl(bufferSize);
+            // bufferManager.resetIOCount();
+            UserController uc = new UserController(bufferSize);
+            Map<String, Object> map = (Map<String, Object>) uc.runQuery(startKey, endKey);
+            AtomicInteger ioCount = (AtomicInteger) map.get("iocount");
+            Long movieSelection = (Long) map.get("movieSelection");
 
-            bufferManager.resetIOCount();
-            // Query Plan Construction
-            ScanOperator<MovieRecord> movieScan = new ScanOperator<>(bufferManager, MOVIES_DATA_PAGE_INDEX);
-
-            List<SelectionPredicate> moviePredicates = new ArrayList<>();
-            moviePredicates.add(new SelectionPredicate(1, startKey, Comparator.GREATER_THAN_OR_EQUALS));
-            moviePredicates.add(new SelectionPredicate(1, endKey, Comparator.LESS_THAN_OR_EQUALS));
-            SelectionOperator<MovieRecord> movieSelection = new SelectionOperator<>(movieScan, moviePredicates);
-
-            ScanOperator<WorkedOnRecord> workedOnScan = new ScanOperator<>(bufferManager, WORKED_ON_DATA_PAGE_INDEX);
-
-            List<SelectionPredicate> workedOnPredicates = new ArrayList<>();
-            workedOnPredicates.add(new SelectionPredicate(2, "director", Comparator.EQUALS));
-            SelectionOperator<WorkedOnRecord> workedOnSelection = new SelectionOperator<>(workedOnScan,
-                    workedOnPredicates);
-
-            ProjectionOperator<WorkedOnRecord, MoviePersonRecord> workedOnProjection = new ProjectionOperator<>(
-                    workedOnSelection, ProjectionType.PROJECTION_ON_WORKED_ON);
-
-            MaterializeOperator<MoviePersonRecord> workedOnMaterialized = new MaterializeOperator<>(workedOnProjection,
-                    bufferManager, MOVIE_PERSON_DATA_PAGE_INDEX);
-
-            BNLJoinOperator<MovieRecord, MoviePersonRecord, MovieWorkedOnJoinRecord> join1 = new BNLJoinOperator<>(
-                    movieSelection, workedOnMaterialized, 0, 0, (bufferSize - 4) / 2,
-                    bufferManager, BNL_MOVIE_WORKED_ON_INDEX);
-
-            ScanOperator<PeopleRecord> peopleScan = new ScanOperator<>(bufferManager, PEOPLE_DATA_PAGE_INDEX);
-
-            BNLJoinOperator<MovieWorkedOnJoinRecord, PeopleRecord, MovieWorkedOnPeopleJoinRecord> join2 = new BNLJoinOperator<>(
-                    join1, peopleScan, 1, 0, (bufferSize - 4) / 4, bufferManager,
-                    BNL_MOVIE_WORKED_ON_PEOPLE_INDEX);
-            ProjectionOperator<MovieWorkedOnPeopleJoinRecord, TitleNameRecord> projection = new ProjectionOperator<>(
-                    join2, ProjectionType.PROJECTION_ON_FINAL_JOIN);
-
-            projection.open();
-
-            // Prepare Excel file
-            Workbook workbook = new XSSFWorkbook();
-            Sheet sheet = workbook.createSheet("QueryResults_" + (i));
-            int rowNum = 0;
-            Row headerRow = sheet.createRow(rowNum++);
-            headerRow.createCell(0).setCellValue("Title");
-            headerRow.createCell(1).setCellValue("Name");
-
-            TitleNameRecord output;
-            int recordCount = 0;
-            while ((output = projection.next()) != null) {
-                recordCount++;
-                String title = new String(output.title()).trim();
-                String name = new String(output.name()).trim();
-
-                // Print to console
-                // System.out.println(title + "," + name);
-
-                // Write to Excel
-                Row row = sheet.createRow(rowNum++);
-                row.createCell(0).setCellValue(title);
-                row.createCell(1).setCellValue(name);
-            }
-            projection.close();
-
-            try (FileOutputStream fileOut = new FileOutputStream("query_output_" + i + ".xlsx")) {
-                workbook.write(fileOut);
-                workbook.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            // Note: Uncomment to create materialized table
-            // bufferManager.resetMaterializedTable();
-
-            double measuredSelectivity = (recordCount) / (double) getTotalMoviesCount();
-            AtomicInteger measuredIO = bufferManager.getIoCounter();
-            int estimatedIO = (int) estimateIO(bufferSize, measuredSelectivity);
+            double measuredSelectivity = (movieSelection) / (double) getTotalMoviesCount();
+            double estimatedIO = estimateIO(bufferSize, measuredSelectivity);
 
             selectivities.add(measuredSelectivity);
-            measuredIOs.add(measuredIO);
+            measuredIOs.add(ioCount);
             estimatedIOs.add(estimatedIO);
 
         }
@@ -183,40 +118,38 @@ public class queryPerformanceTest {
         return 5632943;
     }
 
-    private static long estimateIO(int bufferSize, double movieSelectivity) {
-        System.out.println("Selectivity: " + movieSelectivity);
+    private static double estimateIO(int bufferSize, double movieSelectivity) {
         long totalMoviePages = 53648;
-        long workedOnPages = 486153;
+        long workedOnPages = 486105;
         long peoplePages = 410238;
 
         long selectedMoviePages = (long) (Math.ceil(movieSelectivity * getTotalMoviesCount() / 105));
 
         long projectedWorkedOnPages = (long) (19385); // materialized pages
 
-        // Materialize projected selection: write + read
-        long workedOnMaterializeIO = 2 * projectedWorkedOnPages;
+        // Materialize projected selection: write
+        long workedOnMaterializeIO = projectedWorkedOnPages;
 
         // First join (Movies ⨝ WorkedOn)
         int blockSize = (bufferSize - 4) / 2;
-        long join1Cost = selectedMoviePages + (projectedWorkedOnPages * (selectedMoviePages / blockSize));
+        double join1Cost = (projectedWorkedOnPages * (Math.ceil(selectedMoviePages / blockSize)));
 
         long join1OutputPages = selectedMoviePages;
 
         // Second join (Join1Result ⨝ People)
-        long join2Cost = join1OutputPages + (peoplePages * (join1OutputPages / blockSize));
+        double join2Cost = (peoplePages * (Math.ceil(join1OutputPages / blockSize)));
 
         // Total estimated I/O:2ws
         return totalMoviePages // read movies
                 + workedOnPages // scan workedOn
                 + workedOnMaterializeIO // materialized write+read
                 + join1Cost // join reads both sides
-                + peoplePages // read people table
                 + join2Cost; // second join reads both sides
     }
 
     private static void plotAndSaveIOGraph(List<Double> selectivities,
             List<AtomicInteger> measuredIOs,
-            List<Integer> estimatedIOs,
+            List<Double> estimatedIOs,
             String outputPath) throws IOException {
         XYSeries measuredSeries = new XYSeries("Measured I/O");
         XYSeries estimatedSeries = new XYSeries("Estimated I/O");

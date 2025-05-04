@@ -119,8 +119,7 @@ public class UserController {
         return ans;
     }
 
-
-    public void runQuery(String startRange, String endRange) {
+    public Object runQuery(String startRange, String endRange) {
         // Scan Movies
 		ScanOperator<MovieRecord> movieScan = new ScanOperator<>(bf, MOVIES_DATA_PAGE_INDEX);
 
@@ -223,5 +222,9 @@ public class UserController {
 
 
 		System.out.println("Query completed. Results saved to src/main/resources/static/query_output_"+ startRange + "_" + endRange + ".xlsx");
+        Map<String, Object> result = new HashMap<>();
+        result.put("iocount", bf.getIoCounter());
+        result.put("movieSelection", movieSelection.getTotalMatched());
+        return result;
     }
 }
