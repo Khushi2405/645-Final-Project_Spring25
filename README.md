@@ -185,3 +185,13 @@ src/main/resources/static/
 - Lab 1 report: https://docs.google.com/document/d/14tZhnIS2NrNmMGgE8UW-rLMirMoAPfPxxQ8QosYh5Gs/edit?usp=sharing
 - Lab 2 report: https://docs.google.com/document/d/1w-UNgUYhvRam3E4iOgJxwrIdy_nXfXY52g8zrtHz--M/edit?usp=sharing
 - Lab 3 report: https://docs.google.com/document/d/1w-UNgUYhvRam3E4iOgJxwrIdy_nXfXY52g8zrtHz--M/edit?usp=sharing
+
+## 🧑‍💻 Contributors
+
+- Khushi Gandhi  
+- Vishakha Mistry
+
+## 📝 License
+
+This project is licensed under the MIT License.  
+See the [LICENSE](LICENSE) file for details.
